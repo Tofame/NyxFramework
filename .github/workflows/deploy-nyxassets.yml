@@ -1,0 +1,66 @@
+# Filename must match the NuGet.org trusted publisher policy: deploy-nyxassets.yml
+name: Deploy NyxAssets to NuGet
+
+on:
+  push:
+    tags:
+      - nyxassets/v*
+  workflow_dispatch:
+    inputs:
+      version:
+        description: SemVer package version (e.g. 1.0.0 or 1.0.0-preview.1)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#nyxassets/v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing NyxAssets $VERSION"
+
+      - name: Test
+        run: dotnet test NyxAssets/Tests/NyxAssets.Tests.csproj -c Release --verbosity minimal
+
+      - name: Pack
+        run: dotnet pack NyxAssets/NyxAssets.csproj -c Release -o ./artifacts/nuget -p:Version=${{ steps.version.outputs.version }}
+
+      - name: NuGet login (OIDC)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: Tofame
+
+      - name: Push package
+        run: |
+          dotnet nuget push ./artifacts/nuget/*.nupkg \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
+            --skip-duplicate
+
+      - name: Push symbols
+        run: |
+          dotnet nuget push ./artifacts/nuget/*.snupkg \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
+            --skip-duplicate

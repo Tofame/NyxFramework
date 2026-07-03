@@ -8,6 +8,12 @@
     <AssemblyName>NyxAssets</AssemblyName>
     <Description>Load Nyx-style .spr / .dat (Asset Editor–compatible parsing).</Description>
     <LangVersion>12</LangVersion>
+    <IsPackable>true</IsPackable>
+    <Version>0.1.0</Version>
+    <PackageId>NyxAssets</PackageId>
+    <PackageTags>nyx;assets;sprites;dat;spr;assets;things</PackageTags>
+    <PackageProjectUrl>https://github.com/Tofame/NyxFramework</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
@@ -22,5 +28,8 @@
     <Compile Remove="Tests\**" />
     <EmbeddedResource Remove="Tests\**" />
     <None Remove="Tests\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
