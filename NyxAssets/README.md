@@ -73,6 +73,7 @@ Full index: **[docs/README.md](docs/README.md)**
 
 | Category | Doc | Content |
 |----------|-----|--------|
+| **API** | [docs/API.md](docs/API.md) | Full public API — every type and method. |
 | **Guides** | [guides/usage.md](docs/guides/usage.md) | Loading, decoding, export, scratch buffers. |
 | | [guides/supported-clients.md](docs/guides/supported-clients.md) | `.dat` tiers, compile APIs, client-version switches. |
 | **Formats** | [formats/dat-binary.md](docs/formats/dat-binary.md) | Legacy `.dat` layout. |

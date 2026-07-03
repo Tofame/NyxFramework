@@ -6,6 +6,7 @@ Documentation for using, extending, and maintaining **NyxAssets** — the .NET l
 
 | Document | Description |
 |----------|-------------|
+| [API.md](API.md) | **Full public API reference** — every type, property, and method. |
 | [guides/usage.md](guides/usage.md) | Project reference, loading bundles, decoding sprites, export utilities, scratch buffers. |
 | [guides/supported-clients.md](guides/supported-clients.md) | Which `.dat` tiers are supported, compile APIs, client-version switches. |
 
