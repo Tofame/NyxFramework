@@ -1,0 +1,114 @@
+# Bestiary window. Toggle with B. List rows filled from C# (NyxGuiRowList).
+
+[document]
+  root = "BestiaryRoot"
+  root-window = "rootWindow"
+
+Container BestiaryRoot
+  visible = false
+  focusable = true
+  draggable = true
+  width = { fixed = 600 }
+  height = { fixed = 420 }
+  anchors.horizontalCenter = "parent.horizontalCenter"
+  anchors.verticalCenter = "parent.verticalCenter"
+  image_source = "panel_side.png"
+  image_border = 3
+  image_smooth = true
+  image_color = #f4f4f4
+
+  Label lblBestiaryTitle
+    text = "Bestiary"
+    text_align = "center"
+    fixed_height = 36
+    margin = "10 0 0 10"
+    border = { width = 1, color = "#FFFFFF" }
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+
+  Container pnlListColumn
+    fixed_width = 200
+    margin = "8 0 10 14"
+    anchors.top = "lblBestiaryTitle.bottom"
+    anchors.left = "parent.left"
+    anchors.bottom = "parent.bottom"
+
+    VScrollBar BestiaryScrollbar
+      width = 10
+      anchors.top = "parent.top"
+      anchors.right = "parent.right"
+      anchors.bottom = "parent.bottom"
+
+    ScrollablePanel BestiaryScroll
+      vertical_scrollbar = "BestiaryScrollbar"
+      anchors.left = "parent.left"
+      anchors.right = "BestiaryScrollbar.left"
+      anchors.top = "parent.top"
+      anchors.bottom = "parent.bottom"
+
+  Container pnlDetail
+    margin = "8 14 10 10"
+    anchors.top = "lblBestiaryTitle.bottom"
+    anchors.left = "pnlListColumn.right"
+    anchors.right = "parent.right"
+    anchors.bottom = "parent.bottom"
+
+    Label detailName
+      text = "Rat"
+      text_align = "center"
+      fixed_height = 28
+      margin = "8 10 0 10"
+      border_width = 0
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "parent.top"
+
+    Label detailClass
+      text = "Mammal"
+      text_align = "center"
+      fixed_height = 20
+      margin = "0 10 4 10"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "detailName.bottom"
+
+    Label detailHp
+      text = "Hit Points: 30"
+      fixed_height = 22
+      margin = "8 14 0 14"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "detailClass.bottom"
+
+    Label detailExp
+      text = "Experience: 5"
+      fixed_height = 22
+      margin = "0 14 0 14"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "detailHp.bottom"
+
+    Label detailSpeed
+      text = "Speed: 134"
+      fixed_height = 22
+      margin = "0 14 0 14"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "detailExp.bottom"
+
+    Label detailArmor
+      text = "Armor: 1"
+      fixed_height = 22
+      margin = "0 14 0 14"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "detailSpeed.bottom"
+
+    Label detailDesc
+      text = "A common sewer rat. Weak alone, but swarms can overwhelm unprepared adventurers."
+      margin = "12 16 10 16"
+      anchors.top = "detailArmor.bottom"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.bottom = "parent.bottom"

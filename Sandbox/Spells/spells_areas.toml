@@ -1,0 +1,18 @@
+# Spell area patterns (relative to caster anchor cell marked 3 or 2).
+# 0 = no effect, 1 = effect + damage, 2 = caster (no self effect), 3 = caster + effect.
+
+[slash1]
+rows = [[1, 3, 1]]
+
+[slash2]
+rows = [
+  [1, 1, 1],
+  [1, 3, 1],
+]
+
+[slashArea]
+rows = [
+  [1, 1, 1],
+  [1, 2, 1],
+  [1, 1, 1],
+]

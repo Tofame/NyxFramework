@@ -1,0 +1,64 @@
+# UI module manifest for Sandbox.
+# Loaded by SandboxUiBootstrap to know which modules exist.
+
+[modules.shell]
+file = shell.nyxui
+enabled = true
+order = 10
+
+[modules.engine_stats]
+file = engine_stats.nyxui
+enabled = true
+order = 20
+
+[modules.player_stats]
+file = player_stats.nyxui
+enabled = true
+order = 30
+
+[modules.exp_analyzer]
+file = exp_analyzer.nyxui
+enabled = true
+order = 40
+
+[modules.backpack]
+file = backpack.nyxui
+enabled = true
+order = 50
+
+[modules.action_bar]
+file = action_bar.nyxui
+enabled = true
+order = 60
+
+[modules.bestiary]
+file = bestiary.nyxui
+enabled = true
+order = 70
+
+[modules.quest_log]
+file = quest_log.nyxui
+enabled = true
+order = 80
+
+[modules.inventory]
+file = inventory.nyxui
+enabled = true
+order = 90
+
+[modules.task_list]
+file = task_list.nyxui
+enabled = true
+order = 100
+
+[modules.minimap]
+file = minimap.nyxui
+enabled = true
+order = 110
+
+[modules.object_fit]
+file = object_fit.nyxui
+enabled = true
+order = 120
+
+

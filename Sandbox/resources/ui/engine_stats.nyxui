@@ -1,0 +1,128 @@
+# NyxGUI engine stats panel. Toggle with U.
+
+[document]
+  root = "engine_stats_root"
+  root-window = "rootWindow"
+
+Container engine_stats_root
+  visible = true
+  anchors.left = "parent.left"
+  anchors.top = "parent.top"
+  width = { fixed = 284 }
+  height = { fixed = 308 }
+  background_color = #000000
+  opacity = 0.6
+  border = { width = 1, color = "#D4AF37" }
+  margin_top = 20
+  margin_left = 20
+
+  Container engine_stats_inner
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+    anchors.bottom = "parent.bottom"
+    phantom = true
+    margin = "6 6 6 6"
+
+    Label lbl_render_header
+      text = "NyxRender"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "parent.top"
+      fixed_height = 20
+
+    Label lbl_fps
+      text = "FPS: —"
+      bind_key = "sandbox.fps"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_render_header.bottom"
+      fixed_height = 20
+
+    Label lbl_sprites
+      text = "Sprites: —"
+      bind_key = "sandbox.sprites"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_fps.bottom"
+      fixed_height = 20
+
+    Label lbl_atlases
+      text = "Atlases: —"
+      bind_key = "sandbox.atlases"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_sprites.bottom"
+      fixed_height = 20
+
+    Label lbl_vram
+      text = "VRAM: —"
+      bind_key = "sandbox.vram"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_atlases.bottom"
+      fixed_height = 20
+
+    Label lbl_nyx_header
+      text = "NyxGUI"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_vram.bottom"
+      margin_top = 8
+      fixed_height = 20
+
+    Label lbl_nyx_font
+      text = "UI font: —"
+      bind_key = "sandbox.nyx_font"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_nyx_header.bottom"
+      fixed_height = 25
+
+    Label lbl_nyx_drag
+      text = "Panel drag opacity: —"
+      bind_key = "sandbox.nyx_drag"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_nyx_font.bottom"
+      fixed_height = 20
+
+    Label lbl_nyx_screens
+      text = "Screens: —"
+      bind_key = "sandbox.nyx_screens"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_nyx_drag.bottom"
+      fixed_height = 20
+
+    Label lbl_nyx_render_header
+      text = "NyxGUIRender"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_nyx_screens.bottom"
+      margin_top = 8
+      fixed_height = 20
+
+    Label lbl_gui_draws
+      text = "Draws (last frame): —"
+      bind_key = "sandbox.gui_draws"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_nyx_render_header.bottom"
+      fixed_height = 20
+
+    Label lbl_gui_textures
+      text = "Cached textures: —"
+      bind_key = "sandbox.gui_textures"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_gui_draws.bottom"
+      fixed_height = 20
+
+    Label lbl_gui_glyphs
+      text = "Text cache: —"
+      bind_key = "sandbox.gui_glyphs"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "lbl_gui_textures.bottom"
+      fixed_height = 20

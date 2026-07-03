@@ -1,0 +1,29 @@
+# NyxAssets Client Formats & Custom Extensions Skill
+
+This skill documents how to extend and customize the binary loading system for client metadata (`.dat`), sprite packages (`.spr`), or compressed page archives (`.assets`).
+
+## 1. Customizing Catalog Properties
+* **Rule**: When adding custom properties to game items (e.g., durability, rarity traits), do not modify core binary structures directly. Instead, serialize them into `things.json` via `ThingCatalog` metadata extensions.
+* **Flow**:
+  1. Load raw binary metadata using `DatThingCatalogReader`.
+  2. Merge supplementary attributes (e.g., from XML/JSON files) using custom catalog writers.
+  3. Export to consolidated `things.json` which is automatically preferred by the sandbox.
+
+## 2. Implementing New Asset Readers
+* **Pattern**: Implement `IThingCatalogReader` and `ISpriteSource` to support alternative formats.
+* **Example**:
+  ```csharp
+  public class CustomAssetReader : IThingCatalogReader
+  {
+      public ThingCatalog Read(byte[] data, ClientDataReadOptions options)
+      {
+          var catalog = new ThingCatalog();
+          // Implement custom binary parsing here
+          return catalog;
+      }
+  }
+  ```
+
+## 3. Sprite RLE Compression Mechanics
+* **Encoding**: Direct byte stream conversion from raw 32×32 RGBA pixels to RLE compression is managed in `SpritePixelCodec.CompressToRle`.
+* **Constraint**: Ensure alpha values are correctly evaluated (`A == 0` for transparency) to optimize RLE size and draw performance.

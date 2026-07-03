@@ -1,0 +1,26 @@
+# Equipment window (OT layout). Toggle with I.
+
+[document]
+  root = "InventoryRoot"
+  root-window = "rootWindow"
+
+MiniWindow InventoryRoot
+  title = "Inventory"
+  image_source = "miniwindow.png"
+  image_border = 4
+  image_border_top = 23
+  image_border_bottom = 4
+  text_offset = "24 5"
+  image_smooth = false
+  visible = true
+  width = { fixed = 140 }
+
+  Container InventorySlots
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+    anchors.bottom = "parent.bottom"
+    phantom = true
+    font_size = 15
+    font_bold = true
+    margin = "4 12 4 24"

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NyxGameCore</RootNamespace>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AssemblyName>NyxGameCore</AssemblyName>
+    <Description>Nyx Framework core structures (Position, Tile, base Item)</Description>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\NyxAssets\NyxAssets.csproj" />
+    <ProjectReference Include="..\..\NyxStructs\NyxStructs.csproj" />
+  </ItemGroup>
+</Project>

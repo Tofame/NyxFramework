@@ -1,0 +1,51 @@
+# Action bar — bottom center of gamePanel.
+
+[document]
+  root = "ActionBarRoot"
+  root-window = "rootWindow"
+
+Container ActionBarRoot
+  phantom = true
+  anchors.horizontalCenter = "parent.horizontalCenter"
+  anchors.bottom = "parent.bottom"
+  fixed_width = 162
+  fixed_height = 48
+  margin_bottom = 14
+
+  Container ActionBarTray
+    anchors.horizontalCenter = "parent.horizontalCenter"
+    anchors.bottom = "parent.bottom"
+    fixed_width = 162
+    fixed_height = 44
+    background_color = #1a1e28cc
+    border = { width = 1, color = "#4a5568" }
+
+    Button btnAction1
+      text = "F1"
+      anchors.left = "parent.left"
+      anchors.top = "parent.top"
+      anchors.bottom = "parent.bottom"
+      fixed_width = 48
+      margin_left = 6
+      margin_top = 4
+      margin_bottom = 4
+
+    Button btnAction2
+      text = "F2"
+      anchors.left = "btnAction1.right"
+      anchors.top = "parent.top"
+      anchors.bottom = "parent.bottom"
+      fixed_width = 48
+      margin_left = 6
+      margin_top = 4
+      margin_bottom = 4
+
+    Button btnAction3
+      text = "F3"
+      anchors.left = "btnAction2.right"
+      anchors.top = "parent.top"
+      anchors.bottom = "parent.bottom"
+      fixed_width = 48
+      margin_left = 6
+      margin_top = 4
+      margin_bottom = 4

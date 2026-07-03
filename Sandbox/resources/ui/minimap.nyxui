@@ -1,0 +1,82 @@
+# Minimap window.
+[document]
+  root = "MinimapRoot"
+  root-window = "rootWindow"
+
+MiniWindow MinimapRoot
+  title = "Minimap"
+  visible = false
+  draggable = true
+  resizable = true
+  auto_size = false
+  image_source = "miniwindow.png"
+  image_border = 4
+  image_border_top = 23
+  image_border_bottom = 4
+  text_offset = "24 5"
+  image_smooth = false
+  width = 210
+  height = 229
+
+  Button btnZoomOut
+    label = "-"
+    background_color = #b08868
+    border = { width = 1, color = "#8c6244" }
+    text_color = #ffeedd
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+    fixed_width = 22
+    fixed_height = 22
+    margin_top = 6
+    margin_right = 6
+    tooltip = "Zoom Out"
+
+    $hover:
+      background_color = #cfa07e
+      border = { width = 1, color = "#a07355" }
+
+    $pressed:
+      background_color = #906b4d
+      border = { width = 1, color = "#704d33" }
+
+  Button btnZoomIn
+    label = "+"
+    background_color = #b08868
+    border = { width = 1, color = "#8c6244" }
+    text_color = #ffeedd
+    anchors.right = "btnZoomOut.left"
+    anchors.top = "parent.top"
+    fixed_width = 22
+    fixed_height = 22
+    margin_top = 6
+    margin_right = 4
+    tooltip = "Zoom In"
+
+    $hover:
+      background_color = #cfa07e
+      border = { width = 1, color = "#a07355" }
+
+    $pressed:
+      background_color = #906b4d
+      border = { width = 1, color = "#704d33" }
+
+  Button btnCenter
+    label = "C"
+    background_color = #b08868
+    border = { width = 1, color = "#8c6244" }
+    text_color = #ffeedd
+    anchors.right = "btnZoomIn.left"
+    anchors.top = "parent.top"
+    fixed_width = 22
+    fixed_height = 22
+    margin_top = 6
+    margin_right = 4
+    tooltip = "Center on Player"
+
+    $hover:
+      background_color = #cfa07e
+      border = { width = 1, color = "#a07355" }
+
+    $pressed:
+      background_color = #906b4d
+      border = { width = 1, color = "#704d33" }

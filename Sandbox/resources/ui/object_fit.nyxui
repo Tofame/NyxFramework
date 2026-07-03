@@ -1,0 +1,171 @@
+# Object Fit Test window. Toggle with O.
+[document]
+  root = "ObjectFitRoot"
+  root-window = "rootWindow"
+
+Container ObjectFitRoot
+  visible = false
+  focusable = true
+  width = { fixed = 380 }
+  height = { fixed = 480 }
+  anchors.horizontalCenter = "parent.horizontalCenter"
+  anchors.verticalCenter = "parent.verticalCenter"
+  image_source = "panel_side.png"
+  image_border = 3
+  image_smooth = true
+  image_color = #f4f4f4
+
+  Label lblTitle
+    text = "Object Fit Options"
+    text_align = "center"
+    fixed_height = 28
+    margin = "8 8 0 8"
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+
+  VScrollBar scrollbar
+    width = 12
+    margin = "8 8 8 0"
+    anchors.right = "parent.right"
+    anchors.top = "lblTitle.bottom"
+    anchors.bottom = "parent.bottom"
+
+  ScrollablePanel panelScroll
+    vertical_scrollbar = "scrollbar"
+    margin = "8 0 8 8"
+    anchors.left = "parent.left"
+    anchors.right = "scrollbar.left"
+    anchors.top = "lblTitle.bottom"
+    anchors.bottom = "parent.bottom"
+    layout = { type = "grid", columns = 2, spacing = 12, cell_height = 130 }
+
+    # Option 1: fill (Default)
+    Container boxFill
+      background_color = #dddddd
+      border = { width = 1, color = "#bbbbbb" }
+      
+      Image imgFill
+        image_source = "test/zabka.png"
+        object_fit = "fill"
+        fixed_width = 100
+        fixed_height = 90
+        border = { width = 1, color = "#555555" }
+        anchors.horizontalCenter = "parent.horizontalCenter"
+        anchors.verticalCenter = "parent.verticalCenter"
+
+      ExtendedLabel lblFill
+        text = "fill"
+        text_align = "right"
+        fixed_height = 14
+        anchors.top = "parent.top"
+        anchors.left = "parent.left"
+        anchors.right = "parent.right"
+        margin = "4 4 0 4"
+        color = "#111111"
+        font_bold = true
+        font_size = 11
+
+    # Option 2: contain
+    Container boxContain
+      background_color = #dddddd
+      border = { width = 1, color = "#bbbbbb" }
+      
+      Image imgContain
+        image_source = "test/zabka.png"
+        object_fit = "contain"
+        fixed_width = 100
+        fixed_height = 90
+        border = { width = 1, color = "#555555" }
+        anchors.horizontalCenter = "parent.horizontalCenter"
+        anchors.verticalCenter = "parent.verticalCenter"
+
+      ExtendedLabel lblContain
+        text = "contain"
+        text_align = "right"
+        fixed_height = 14
+        anchors.top = "parent.top"
+        anchors.left = "parent.left"
+        anchors.right = "parent.right"
+        margin = "4 4 0 4"
+        color = "#111111"
+        font_bold = true
+        font_size = 11
+
+    # Option 3: cover
+    Container boxCover
+      background_color = #dddddd
+      border = { width = 1, color = "#bbbbbb" }
+      
+      Image imgCover
+        image_source = "test/zabka.png"
+        object_fit = "cover"
+        fixed_width = 100
+        fixed_height = 90
+        border = { width = 1, color = "#555555" }
+        anchors.horizontalCenter = "parent.horizontalCenter"
+        anchors.verticalCenter = "parent.verticalCenter"
+
+      ExtendedLabel lblCover
+        text = "cover"
+        text_align = "right"
+        fixed_height = 14
+        anchors.top = "parent.top"
+        anchors.left = "parent.left"
+        anchors.right = "parent.right"
+        margin = "4 4 0 4"
+        color = "#111111"
+        font_bold = true
+        font_size = 11
+
+    # Option 4: none
+    Container boxNone
+      background_color = #dddddd
+      border = { width = 1, color = "#bbbbbb" }
+      
+      Image imgNone
+        image_source = "test/zabka.png"
+        object_fit = "none"
+        fixed_width = 100
+        fixed_height = 90
+        border = { width = 1, color = "#555555" }
+        anchors.horizontalCenter = "parent.horizontalCenter"
+        anchors.verticalCenter = "parent.verticalCenter"
+
+      ExtendedLabel lblNone
+        text = "none"
+        text_align = "right"
+        fixed_height = 14
+        anchors.top = "parent.top"
+        anchors.left = "parent.left"
+        anchors.right = "parent.right"
+        margin = "4 4 0 4"
+        color = "#111111"
+        font_bold = true
+        font_size = 11
+
+    # Option 5: scale-down
+    Container boxScaleDown
+      background_color = #dddddd
+      border = { width = 1, color = "#bbbbbb" }
+      
+      Image imgScaleDown
+        image_source = "test/zabka.png"
+        object_fit = "scale-down"
+        fixed_width = 100
+        fixed_height = 90
+        border = { width = 1, color = "#555555" }
+        anchors.horizontalCenter = "parent.horizontalCenter"
+        anchors.verticalCenter = "parent.verticalCenter"
+
+      ExtendedLabel lblScaleDown
+        text = "scale-down"
+        text_align = "right"
+        fixed_height = 14
+        anchors.top = "parent.top"
+        anchors.left = "parent.left"
+        anchors.right = "parent.right"
+        margin = "4 4 0 4"
+        color = "#111111"
+        font_bold = true
+        font_size = 11

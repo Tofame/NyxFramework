@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Silk.NET.Input" Version="2.23.0" />
+    <PackageReference Include="Silk.NET.Input.Glfw" Version="2.23.0" />
+    <PackageReference Include="Tomlyn" Version="0.20.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NyxDrawer\NyxDrawer.csproj" />
+    <ProjectReference Include="..\NyxGUI\NyxGUI.csproj" />
+    <ProjectReference Include="..\NyxGUIRender\NyxGUIRender.csproj" />
+    <ProjectReference Include="..\NyxRender\NyxRender.csproj" />
+    <ProjectReference Include="..\NyxAssets\NyxAssets.csproj" />
+    <ProjectReference Include="..\NyxNetwork\NyxNetwork.csproj" />
+    <ProjectReference Include="NyxGameMap\NyxGameMap.csproj" />
+    <ProjectReference Include="NyxGameCore\NyxGameCore.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="NyxGameCore\**" />
+    <Compile Remove="NyxGameMap\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="config.toml">
+      <!-- Always: avoid stale lookType etc. when source was edited but MSBuild skipped copy. -->
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="shaders\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>shaders\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+    <None Include="resources\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+    <None Include="Spells\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Spells\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
+</Project>

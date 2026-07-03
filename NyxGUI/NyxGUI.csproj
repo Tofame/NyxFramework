@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NyxGui</RootNamespace>
+    <AssemblyName>NyxGUI</AssemblyName>
+    <Description>Immediate-mode style widget tree (panels, scroll areas, buttons) inspired by The Forgotten Client GUI_Elements.</Description>
+  </PropertyGroup>
+
+</Project>

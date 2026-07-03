@@ -1,0 +1,191 @@
+# Player statistics window. Toggle with G.
+# Demonstrates: bind_key for reactive labels, button click handlers (wired in C# by id).
+
+[document]
+  root = "PlayerStatsRoot"
+  root-window = "rootWindow"
+
+MiniWindow PlayerStatsRoot
+  title = "Player Stats"
+  image_source = "miniwindow.png"
+  image_border = 4
+  image_border_top = 23
+  image_border_bottom = 4
+  text_offset = "24 5"
+  image_smooth = false
+  visible = true
+  auto_size = true
+  width = { fixed = 284 }
+
+  Label lblHealth
+    text = "Health: —"
+    bind_key = "player.health"
+    anchors.left = "parent.left"
+    anchors.right = "btnHealthMinus.left"
+    anchors.top = "parent.top"
+    fixed_height = 24
+    margin_top = 26
+    margin_left = 4
+    focusable = false
+
+  Button btnHealthMinus
+    label = "-"
+    on_click = "decrease_health"
+    anchors.right = "btnHealthPlus.left"
+    anchors.top = "parent.top"
+    fixed_width = 28
+    fixed_height = 24
+    margin_top = 26
+    margin_right = 4
+    tooltip = "Decrease health"
+
+  Button btnHealthPlus
+    label = "+"
+    on_click = "increase_health"
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+    fixed_width = 28
+    fixed_height = 24
+    margin_top = 26
+    margin_right = 4
+    tooltip = "Increase health"
+
+  ProgressBar barHealth
+    value = 0
+    minimum = 0
+    maximum = 100
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "lblHealth.bottom"
+    fixed_height = 12
+    margin = "4 2 4 2"
+
+  Label lblMana
+    text = "Mana: —"
+    bind_key = "player.mana"
+    anchors.left = "parent.left"
+    anchors.right = "btnManaMinus.left"
+    anchors.top = "barHealth.bottom"
+    fixed_height = 24
+    margin_top = 8
+    margin_left = 4
+    focusable = false
+
+  Button btnManaMinus
+    label = "-"
+    on_click = "decrease_mana"
+    anchors.right = "btnManaPlus.left"
+    anchors.top = "barHealth.bottom"
+    fixed_width = 28
+    fixed_height = 24
+    margin_top = 8
+    margin_right = 4
+    tooltip = "Decrease mana"
+
+  Button btnManaPlus
+    label = "+"
+    on_click = "increase_mana"
+    anchors.right = "parent.right"
+    anchors.top = "barHealth.bottom"
+    fixed_width = 28
+    fixed_height = 24
+    margin_top = 8
+    margin_right = 4
+    tooltip = "Increase mana"
+
+  ProgressBar barMana
+    value = 0
+    minimum = 0
+    maximum = 100
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "lblMana.bottom"
+    fixed_height = 12
+    margin = "4 2 4 2"
+
+  Label lblLevel
+    text = "Level: —"
+    bind_key = "player.level"
+    anchors.left = "parent.left"
+    anchors.right = "btnLevelMinus.left"
+    anchors.top = "barMana.bottom"
+    fixed_height = 24
+    margin_top = 8
+    margin_left = 4
+    focusable = false
+
+  Button btnLevelMinus
+    label = "-"
+    on_click = "decrease_level"
+    anchors.right = "btnLevelPlus.left"
+    anchors.top = "barMana.bottom"
+    fixed_width = 28
+    fixed_height = 24
+    margin_top = 8
+    margin_right = 4
+    tooltip = "Decrease level"
+
+  Button btnLevelPlus
+    label = "+"
+    on_click = "increase_level"
+    anchors.right = "parent.right"
+    anchors.top = "barMana.bottom"
+    fixed_width = 28
+    fixed_height = 24
+    margin_top = 8
+    margin_right = 4
+    tooltip = "Increase level"
+
+  Label lblExp
+    text = "Experience: —"
+    bind_key = "player.exp"
+    anchors.left = "parent.left"
+    anchors.right = "btnExpMinus.left"
+    anchors.top = "lblLevel.bottom"
+    fixed_height = 24
+    margin_top = 8
+    margin_left = 4
+    focusable = false
+
+  Button btnExpMinus
+    label = "-"
+    on_click = "decrease_exp"
+    anchors.right = "btnExpPlus.left"
+    anchors.top = "lblLevel.bottom"
+    fixed_width = 28
+    fixed_height = 24
+    margin_top = 8
+    margin_right = 4
+    tooltip = "Decrease experience"
+
+  Button btnExpPlus
+    label = "+"
+    on_click = "increase_exp"
+    anchors.right = "parent.right"
+    anchors.top = "lblLevel.bottom"
+    fixed_width = 28
+    fixed_height = 24
+    margin_top = 8
+    margin_right = 4
+    tooltip = "Increase experience"
+
+  ProgressBar barExp
+    value = 0
+    minimum = 0
+    maximum = 1000
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "lblExp.bottom"
+    fixed_height = 12
+    margin = "4 2 4 2"
+
+  Label lblPosition
+    text = "Position: —"
+    bind_key = "player.position"
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "barExp.bottom"
+    fixed_height = 24
+    margin_top = 8
+    margin_left = 4
+    focusable = false

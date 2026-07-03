@@ -1,0 +1,80 @@
+# EXP analyzer window. Toggle with E.
+
+[document]
+  root = "ExpAnalyzerRoot"
+  root-window = "rootWindow"
+
+MiniWindow ExpAnalyzerRoot
+  title = "EXP Analyzer"
+  image_source = "miniwindow.png"
+  image_border = 4
+  image_border_top = 23
+  image_border_bottom = 4
+  text_offset = "24 5"
+  icon = "icons/analyzerExp.png"
+  icon_rect = "4 4 16 16"
+  image_smooth = false
+  visible = true
+  auto_size = true
+  width = { fixed = 284 }
+
+  Label lblCurrentRate
+    text = "Current: 0 / hr"
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+    fixed_height = 16
+    margin_top = 30
+    margin_left = 8
+    margin_right = 8
+
+  Label lblGraphCurrent
+    text = "EXP / hr (last ~60s)"
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "lblCurrentRate.bottom"
+    fixed_height = 14
+    margin_top = 4
+    margin_left = 8
+
+  Graph graphCurrentHr
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "lblGraphCurrent.bottom"
+    fixed_height = 110
+    margin_top = 2
+    margin_left = 8
+    margin_right = 8
+    square_plot = true
+    show_scale_labels = true
+    auto_scale_y = true
+
+  Label lblSessionAvg
+    text = "Session avg: 0 / hr"
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "graphCurrentHr.bottom"
+    fixed_height = 16
+    margin_top = 8
+    margin_left = 8
+
+  Label lblGraphSession
+    text = "EXP / hr (session average)"
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "lblSessionAvg.bottom"
+    fixed_height = 14
+    margin_top = 4
+    margin_left = 8
+
+  Graph graphSessionAvgHr
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "lblGraphSession.bottom"
+    fixed_height = 110
+    margin_top = 2
+    margin_left = 8
+    margin_right = 8
+    square_plot = true
+    show_scale_labels = true
+    auto_scale_y = true

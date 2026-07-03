@@ -1,0 +1,45 @@
+# NyxFramework State Decoupling & Communication Skill
+
+This skill outlines design patterns for avoiding global singletons, using constructor injection, and executing thread-safe event communication between game logic loops and UI rendering stacks.
+
+## 1. Avoid Global Singletons
+* **Rule**: Never create static `Instance` properties or global managers (e.g. `GameWorld.Instance`, `Player.Current`) that are accessed directly by UI widgets.
+* **Why**: Tight coupling breaks testability, makes multiplayer/split-screen state management impossible, and leads to race conditions.
+
+## 2. Constructor Injection
+* **Pattern**: Always pass required dependencies via constructors.
+* **Example**:
+  ```csharp
+  public class GameplayScreen : NyxScreen
+  {
+      private readonly GameWorld _world;
+      private readonly UIManager _ui;
+
+      public GameplayScreen(GameWorld world, UIManager ui)
+      {
+          _world = world;
+          _ui = ui;
+      }
+  }
+  ```
+
+## 3. Event Callbacks & Action Propagation
+* **Pattern**: When a UI element triggers an action (e.g., clicking a spell button, dragging an item), propagate it up using delegates or event actions rather than modifying the world state directly.
+* **Example**:
+  ```csharp
+  public class ActionBarSlot : NyxButton
+  {
+      public Action<int>? OnSpellTriggered { get; set; }
+
+      private void HandleClick()
+      {
+          OnSpellTriggered?.Invoke(SpellId);
+      }
+  }
+  ```
+
+## 4. Thread Synchronization (Game Loop vs. UI Frame Ticks)
+* **Problem**: Network messages and physics ticks might update collections on a background worker thread while the UI is drawing them on the main thread, leading to collection modification exceptions.
+* **Solution**:
+  - Sync collections using lock objects before mutating.
+  - Dispatch rendering updates to the main thread's message queue, or safely snapshot/copy lists before rendering frames.

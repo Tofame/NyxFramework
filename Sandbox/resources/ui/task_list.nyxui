@@ -1,0 +1,43 @@
+# Task List window. Toggle with T.
+# Demonstrates: Grid Layout in a Scrollable Panel.
+
+[document]
+  root = "TaskListRoot"
+  root-window = "rootWindow"
+
+Container TaskListRoot
+  visible = false
+  focusable = true
+  width = { fixed = 320 }
+  height = { fixed = 280 }
+  anchors.horizontalCenter = "parent.horizontalCenter"
+  anchors.verticalCenter = "parent.verticalCenter"
+  image_source = "panel_side.png"
+  image_border = 3
+  image_smooth = true
+  image_color = #f4f4f4
+
+  Label lblTaskListTitle
+    text = "Tasks"
+    text_align = "center"
+    fixed_height = 28
+    margin = "8 8 0 8"
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+
+  VScrollBar TaskScrollbar
+    width = 12
+    margin = "8 8 8 0"
+    anchors.right = "parent.right"
+    anchors.top = "lblTaskListTitle.bottom"
+    anchors.bottom = "parent.bottom"
+
+  ScrollablePanel TaskListScroll
+    vertical_scrollbar = "TaskScrollbar"
+    margin = "8 0 8 8"
+    anchors.left = "parent.left"
+    anchors.right = "TaskScrollbar.left"
+    anchors.top = "lblTaskListTitle.bottom"
+    anchors.bottom = "parent.bottom"
+    layout = { type = "grid", columns = 2, spacing = 8, cell_height = 64 }

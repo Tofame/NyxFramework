@@ -1,0 +1,19 @@
+# Sandbox spells — F1 uses the first entry. Area lives in scripts/*.txt.
+
+[[spell]]
+name = "Slash"
+words = "slash"
+direction = true
+script = "slash"
+
+[[spell]]
+name = "Area Slash"
+words = "area slash"
+selftarget = true
+script = "areaslash"
+
+[[spell]]
+name = "Missile Shot"
+words = "missile shot"
+mouseTarget = true
+script = "missile"

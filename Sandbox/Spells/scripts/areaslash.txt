@@ -1,0 +1,2 @@
+effectId=5
+area=slashArea

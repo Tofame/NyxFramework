@@ -1,0 +1,2 @@
+effectId=3
+area=slash1

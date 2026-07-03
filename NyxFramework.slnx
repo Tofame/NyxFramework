@@ -1,0 +1,12 @@
+<Solution>
+  <Project Path="Sandbox/Sandbox.csproj" />
+  <Project Path="NyxDrawer/NyxDrawer.csproj" />
+  <Project Path="NyxGUI/NyxGUI.csproj" />
+  <Project Path="NyxGUIRender/NyxGUIRender.csproj" />
+  <Project Path="NyxRender/NyxRender.csproj" />
+  <Project Path="NyxAssets/NyxAssets.csproj" />
+  <Project Path="NyxAssets/Tests/NyxAssets.Tests.csproj" />
+  <Project Path="NyxNetwork/NyxNetwork.csproj" />
+  <Project Path="Sandbox/NyxGameMap/NyxGameMap.csproj" />
+  <Project Path="Sandbox/NyxGameCore/NyxGameCore.csproj" />
+</Solution>

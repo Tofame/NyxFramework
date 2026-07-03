@@ -1,0 +1,50 @@
+# NyxGUI Anchoring & Layout Resolution Skill
+
+This skill defines how to correctly layout, anchor, and resolve UI coordinates when building or extending programmatic interface components in the NyxGUI framework.
+
+## 1. Topological Layout Resolution for Sibling Dependencies
+When building a custom window or panel programmatically (i.e. not parsing from a `.nyxui` declarative XML document), it does not have a root document.
+* **Problem**: The simplified layout resolver in `SyncBodyLayout` skips any child widget that has sibling dependencies (e.g., a scroll panel anchored to a scrollbar via `WidgetEdge`) because it lacks a topological sorting pass.
+* **Solution**: Always use `NyxLayoutResolver.RelayoutContainer` to lay out the children of programmatic windows. Build a lookup dictionary of the container's children's IDs (the widget map) and pass it along with a local `NyxGuiLayoutEnvironment` to ensure the layout engine resolves sibling anchors in the correct dependency order:
+  ```csharp
+  var widgetsById = new Dictionary<string, NyxElement>(StringComparer.OrdinalIgnoreCase);
+  foreach (var child in _body.Children)
+  {
+      if (!string.IsNullOrEmpty(child.Id))
+          widgetsById[child.Id] = child;
+  }
+  var env = new NyxGuiLayoutEnvironment
+  {
+      WindowBounds = content,
+      RootWindowAnchorId = NyxGuiRootWindow.DefaultAnchorId,
+  };
+  NyxLayoutResolver.RelayoutContainer(content, _body, widgetsById, env);
+  ```
+
+## 2. Translate to Absolute Coordinates
+In NyxGUI, all layouts (`Bounds` and drawing offsets) are stored as **absolute screen coordinates**, rather than parent-relative offsets.
+* When adding a child (e.g., inside `AddToBody(child, localX, localY)`), calculate screen coordinates by adding the parent's current absolute `X` and `Y` bounds.
+* When a parent moves (e.g. during dragging or scrolling), the container's `SetBounds` method translates the absolute positions of all registered children by the coordinate delta (`dx`, `dy`).
+* Never hardcode or cache screen coordinates; retrieve parent bounds dynamically at layout resolution time.
+
+## 3. Explicit Scrollbar Linkage & Viewport Margins
+`NyxScrollablePanel` does not create scrollbars automatically.
+* Instantiate scrollbar widgets (like `NyxVScrollBar`) explicitly, set their `LayoutBox` (width, margin, anchors), and add them to the parent window.
+* Link them to the panel: `_scroll.VerticalScrollBar = scrollbar`.
+* Anchor the scroll panel's edge directly to the scrollbar widget (`WidgetEdge("ChatScrollBar", Left)`) with a small margin (`4px`) rather than to the parent edge, which prevents text from overlapping or clipping under the scrollbar track.
+
+## 4. Programmatic Layout Anchors Example
+When defining programmatic bounds and anchoring constraints, use the `LayoutBox` builder structure:
+```csharp
+var scrollPanel = new NyxScrollablePanel { Id = "ChatScroll" };
+scrollPanel.Layout = new LayoutBox()
+    .Anchor(Left, ParentEdge(Left))
+    .Anchor(Top, ParentEdge(Top))
+    .Anchor(Bottom, ParentEdge(Bottom))
+    .Anchor(Right, WidgetEdge("ChatScrollBar", Left, margin: 4));
+```
+
+## 5. Common Pitfalls & Infinite Layout Loops
+* **Circular Dependencies**: Never anchor Widget A to Widget B while Widget B is anchored to Widget A (directly or indirectly). This will cause stack overflows during topological sort resolution.
+* **Missing Parent Bounds Translation**: If you override a parent widget's `SetBounds` without propagating the coordinate delta to its children, the children will render detached from the parent when the parent moves. Always call `base.SetBounds(newBounds)` or manually offset each child's position by the delta.
+* **Invisible Scroll viewport sizing**: When setting up scroll panel viewports, ensure the scrollable target container (`_body`) bounds are larger than the viewport panel bounds, otherwise the scrollbar max range will remain `0` and prevent scrolling behavior.

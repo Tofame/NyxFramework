@@ -1,0 +1,206 @@
+# Sandbox demo configuration
+# lookAddons: 0 = none, 1 = addon 1 (pattern Y 1), 2 = addon 2, 3 = both (1|2).
+# lookMount: mount outfit id (pattern Z 1 on rider when mounted). R toggles mount on/off.
+# shader = outfit_default | outfit_gold | outline_outfit_yellow | … (see shaders/)
+# Repeat [[npc]] … for multiple NPCs. Omit all [[npc]] blocks to get one default NPC.
+
+[client]
+# ==============================================================================
+# Asset Loading Modes & Formats
+# ==============================================================================
+# NyxFramework supports loading metadata and sprites in both legacy and modern formats.
+# You can configure any combination below:
+#
+# Metadata Format Options (metadataFormat):
+#   - "auto"   : Checks if 'things.json' exists in assets folder and prefers it;
+#                falls back to loading 'Nyx.dat' from assetsDir.
+#   - "json"   : Forces loading metadata from 'things.json' in resources/assets/.
+#   - "dat"    : Forces loading metadata from 'Nyx.dat' from assetsDir.
+#
+# Sprite Format Options (spritesFormat):
+#   - "auto"   : Checks if 'Nyx.assets' exists in assets folder and prefers it;
+#                falls back to loading 'Nyx.spr' from assetsDir.
+#   - "assets" : Forces loading sprites from ZSTD page-based 'Nyx.assets'.
+#   - "spr"    : Forces loading sprites from legacy RLE-compressed 'Nyx.spr'.
+#
+# Common Combinations:
+#   1. Standalone / Production (things.json + Nyx.assets):
+#      metadataFormat = "json"
+#      spritesFormat = "assets"
+#
+#   2. Legacy Nyx Client (Nyx.dat + Nyx.spr):
+#      metadataFormat = "dat"
+#      spritesFormat = "spr"
+#
+#   3. Hybrids (e.g. things.json + Nyx.spr):
+#      metadataFormat = "json"
+#      spritesFormat = "spr"
+#      (useful to test JSON metadata edits directly with raw legacy sprites)
+#
+# ==============================================================================
+
+# Explicitly configure metadata format ("auto" | "json" | "dat")
+metadataFormat = "auto"
+
+# Explicitly configure sprite format ("auto" | "assets" | "spr")
+spritesFormat = "auto"
+
+
+
+# Legacy metadata reading flags (only used when reading from Nyx.dat/Nyx.spr)
+clientVersion = 1098
+extendedSpriteIds = true
+transparentSprites = false
+improvedAnimations = true
+outfitFrameGroups = true
+
+# ==============================================================================
+# Exporter Settings
+# ==============================================================================
+# Set to true to compile things.json and convert Nyx.spr to ZSTD page-based Nyx.assets.
+# Files will be exported to the Sandbox/resources/assets/ folder.
+exportJson = false
+
+# ==============================================================================
+# Optimization & Cache Settings
+# ==============================================================================
+# Max uncompressed pages kept in memory for lazy loading (each page has 2048 sprites, ~8.4MB raw RGBA data).
+# Memory footprint is maxCachedPages * 8.4 MB (64 pages ≈ 530 MB).
+# Higher values reduce ZSTD CPU overhead on fast scrolls; lower values restrict memory footprint.
+maxCachedPages = 64
+
+# Load the entire sprite archive file (.assets or .spr) directly into memory at startup.
+# Disables file-on-demand memory mapping (OpenReadOnlyFile) in favor of memory-backed reading.
+# Requires more RAM upfront, but prevents any file system read access during execution.
+inMemoryLoading = false
+
+# Directory containing custom shaders. If omitted, defaults to Sandbox/shaders/.
+# shadersDir = 'path/to/custom/shaders'
+
+[map]
+sectorsPath = "resources/sectors"
+
+[player]
+tileX = 14450
+tileY = 14447
+lookType = 142
+lookHead = 77
+lookBody = 100
+lookLegs = 113
+lookFeet = 105
+lookAddons = 0
+lookMount = 761
+# shader = 'outline_outfit_yellow'
+
+[[npc]]
+tileX = 14451
+tileY = 14442
+lookType = 155
+lookHead = 77
+lookBody = 100
+lookLegs = 113
+lookFeet = 105
+lookAddons = 0
+
+[[npc]]
+tileX = 14452
+tileY = 14442
+lookType = 9
+lookHead = 0
+lookBody = 0
+lookLegs = 0
+lookFeet = 0
+lookAddons = 0
+# shader = 'outfit_gold'
+
+[[npc]]
+tileX = 14453
+tileY = 14442
+lookType = 9
+lookHead = 0
+lookBody = 0
+lookLegs = 0
+lookFeet = 0
+lookAddons = 0
+shader = 'outfit_gold'
+
+[[npc]]
+tileX = 14455
+tileY = 14442
+direction = 2
+lookType = 145
+lookHead = 65
+lookBody = 58
+lookLegs = 58
+lookFeet = 58
+lookAddons = 3
+shader = 'outfit_gold'
+
+[[npc]]
+tileX = 14456
+tileY = 14439
+direction = 2
+lookType = 12
+lookHead = 65
+lookBody = 58
+lookLegs = 58
+lookFeet = 58
+lookAddons = 0
+
+[[npc]]
+tileX = 14457
+tileY = 14442
+direction = 2
+lookType = 145
+lookHead = 65
+lookBody = 58
+lookLegs = 58
+lookFeet = 58
+lookAddons = 3
+
+[[npc]]
+tileX = 14458
+tileY = 14442
+direction = 2
+lookType = 17
+lookHead = 65
+lookBody = 58
+lookLegs = 58
+lookFeet = 58
+lookAddons = 3
+
+[[npc]]
+tileX = 14424
+tileY = 14441
+direction = 2
+lookType = 134
+lookHead = 65
+lookBody = 58
+lookLegs = 58
+lookFeet = 58
+lookAddons = 3
+lookMount = 903
+
+[[npc]]
+tileX = 14422
+tileY = 14439
+tileZ = 6
+direction = 1
+lookType = 128
+lookHead = 78
+lookBody = 84
+lookLegs = 95
+lookFeet = 113
+lookAddons = 1
+
+[[npc]]
+tileX = 14434
+tileY = 14420
+tileZ = 6
+direction = 3
+lookType = 136
+lookHead = 95
+lookBody = 116
+lookLegs = 120
+lookFeet = 115
+lookAddons = 2

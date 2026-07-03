@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NyxDrawer</RootNamespace>
+    <AssemblyName>NyxDrawer</AssemblyName>
+    <Description>Nyx / NyxClient–style thing drawing on top of NyxAssets + NyxRender.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NyxRender\NyxRender.csproj" />
+    <ProjectReference Include="..\NyxAssets\NyxAssets.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,41 @@
+# Sandbox UI routing config. Read by SandboxUiBootstrap.
+
+[toggles.engine_stats]
+key = "U"
+
+[toggles.player_stats]
+key = "G"
+
+[toggles.exp_analyzer]
+key = "E"
+
+[toggles.bestiary]
+key = "B"
+
+[toggles.quest_log]
+key = "Q"
+
+[toggles.inventory]
+key = "I"
+
+[toggles.task_list]
+key = "T"
+
+[toggles.minimap]
+key = "M"
+
+[toggles.object_fit]
+key = "O"
+
+[docks.player_stats]
+side = "left"
+width = 202
+
+[docks.exp_analyzer]
+side = "right"
+width = 362
+
+[shell_adopt]
+items = ["bestiary", "quest_log", "action_bar", "task_list", "minimap", "object_fit"]
+
+

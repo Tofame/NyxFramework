@@ -1,0 +1,95 @@
+# Quest Log window. Toggle with Q.
+# Demonstrates: hover/pressed/focused styles, scrollable list, two-column layout.
+
+[document]
+  root = "QuestLogRoot"
+  root-window = "rootWindow"
+
+Container QuestLogRoot
+  visible = false
+  draggable = true
+  anchors.horizontalCenter = "parent.horizontalCenter"
+  anchors.verticalCenter = "parent.verticalCenter"
+  width = { fixed = 700 }
+  height = { fixed = 500 }
+  image_source = "panel_side.png"
+  image_border = 3
+  image_smooth = true
+  image_color = #f4f4f4
+
+  Label lblQuestLogTitle
+    text = "Quest Log"
+    text_align = "center"
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+    fixed_height = 32
+    margin = "10 12 0 12"
+    border = { width = 1, color = "#D4AF37" }
+
+    $hover:
+      border = { width = 2, color = "#D32502" }
+
+  Container pnlQuestList
+    anchors.top = "lblQuestLogTitle.bottom"
+    anchors.left = "parent.left"
+    anchors.bottom = "parent.bottom"
+    fixed_width = 240
+    margin = "8 0 12 12"
+    margin_right = 6
+
+    VScrollBar QuestScrollbar
+      width = 10
+      anchors.top = "parent.top"
+      anchors.right = "parent.right"
+      anchors.bottom = "parent.bottom"
+
+    ScrollablePanel QuestScroll
+      vertical_scrollbar = "QuestScrollbar"
+      anchors.top = "QuestScrollbar.top"
+      anchors.left = "parent.left"
+      anchors.right = "QuestScrollbar.left"
+      anchors.bottom = "QuestScrollbar.bottom"
+
+  Container pnlQuestDetail
+    anchors.top = "lblQuestLogTitle.bottom"
+    anchors.left = "pnlQuestList.right"
+    anchors.right = "parent.right"
+    anchors.bottom = "parent.bottom"
+    margin = "8 12 12 8"
+
+    Label detailMissionTitle
+      text = "Select a mission"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      anchors.top = "parent.top"
+      fixed_height = 26
+      margin = "6 10 0 10"
+      border = { width = 1, color = "#555555" }
+
+      $hover:
+        border = { width = 1, color = "#D4AF37" }
+
+    VScrollBar detailDescScrollbar
+      width = 10
+      anchors.top = "detailMissionTitle.bottom"
+      anchors.right = "parent.right"
+      anchors.bottom = "parent.bottom"
+      margin = "6 10 10 0"
+
+    ScrollablePanel detailDescScroll
+      vertical_scrollbar = "detailDescScrollbar"
+      anchors.top = "detailDescScrollbar.top"
+      anchors.left = "parent.left"
+      anchors.right = "detailDescScrollbar.left"
+      anchors.bottom = "detailDescScrollbar.bottom"
+      margin = "6 0 10 10"
+
+      ExtendedLabel detailMissionDesc
+        text = ""
+        text_wrap = true
+        line_height = 14
+        anchors.left = "parent.left"
+        anchors.right = "parent.right"
+        anchors.top = "parent.top"
+        margin = "4 4 4 4"

@@ -1,0 +1,103 @@
+# Sandbox Main Menu layout definition
+
+[document]
+  root = "MenuRoot"
+  root-window = "rootWindow"
+
+Container MenuRoot
+  anchors.top = "rootWindow.top"
+  anchors.bottom = "rootWindow.bottom"
+  anchors.left = "rootWindow.left"
+  anchors.right = "rootWindow.right"
+  background_color = #0f172a
+
+  Container MenuCenter
+    anchors.horizontalCenter = "parent.horizontalCenter"
+    anchors.verticalCenter = "parent.verticalCenter"
+    fixed_width = 400
+    fixed_height = 350
+    background_color = #1e293b
+    border = { width = 1, color = "#334155" }
+
+    Label TitleLabel
+      text = "NYX FRAMEWORK"
+      text_align = "center"
+      font_size = 28
+      font_bold = true
+      color = #f8fafc
+      fixed_height = 40
+      anchors.top = "parent.top"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      margin = "30 30 0 30"
+
+    Label SubtitleLabel
+      text = "Sandbox Demonstration"
+      text_align = "center"
+      font_size = 14
+      color = #94a3b8
+      fixed_height = 20
+      anchors.top = "TitleLabel.bottom"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      margin = "5 5 0 5"
+
+    Button PlayButton
+      text = "Enter Sandbox"
+      anchors.horizontalCenter = "parent.horizontalCenter"
+      anchors.top = "SubtitleLabel.bottom"
+      margin_top = 40
+      fixed_width = 240
+      fixed_height = 40
+      background_color = #0284c7
+      color = #ffffff
+
+      $hover:
+        background_color = #0ea5e9
+
+      $pressed:
+        background_color = #0369a1
+
+    Button JoinButton
+      text = "Join Server"
+      anchors.horizontalCenter = "parent.horizontalCenter"
+      anchors.top = "PlayButton.bottom"
+      margin_top = 12
+      fixed_width = 240
+      fixed_height = 40
+      background_color = #059669
+      color = #ffffff
+
+      $hover:
+        background_color = #10b981
+
+      $pressed:
+        background_color = #047857
+
+    Button ExitButton
+      text = "Exit"
+      anchors.horizontalCenter = "parent.horizontalCenter"
+      anchors.top = "JoinButton.bottom"
+      margin_top = 12
+      fixed_width = 240
+      fixed_height = 40
+      background_color = #475569
+      color = #ffffff
+
+      $hover:
+        background_color = #64748b
+
+      $pressed:
+        background_color = #334155
+
+    Label StatusLabel
+      text = ""
+      text_align = "center"
+      font_size = 12
+      color = #38bdf8
+      fixed_height = 20
+      anchors.bottom = "parent.bottom"
+      anchors.left = "parent.left"
+      anchors.right = "parent.right"
+      margin = "0 0 15 0"
+      visible = false

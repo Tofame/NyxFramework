@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NyxStructs</RootNamespace>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AssemblyName>NyxStructs</AssemblyName>
+    <Description>Nyx Framework custom memory-efficient structs and collections</Description>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+</Project>

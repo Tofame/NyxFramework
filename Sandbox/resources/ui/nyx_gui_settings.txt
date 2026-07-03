@@ -1,0 +1,3 @@
+# NyxGUI host settings
+
+panel_drag_opacity = 0.7

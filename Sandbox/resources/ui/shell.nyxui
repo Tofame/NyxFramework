@@ -1,0 +1,38 @@
+# Sandbox shell — left/right chrome and gamePanel anchor band.
+
+[document]
+  root = "SandboxShell"
+  root-window = "rootWindow"
+
+Container SandboxShell
+  phantom = true
+  events = false
+  anchors.top = "rootWindow.top"
+  anchors.left = "rootWindow.left"
+  anchors.right = "rootWindow.right"
+  anchors.bottom = "rootWindow.bottom"
+
+  DockPanel leftPanel
+    anchors.top = "rootWindow.top"
+    anchors.left = "rootWindow.left"
+    anchors.bottom = "rootWindow.bottom"
+    fixed_width = 300
+    events = false
+    background_color = #14181f
+    border_width = 0
+
+  DockPanel rightPanel
+    anchors.top = "rootWindow.top"
+    anchors.right = "rootWindow.right"
+    anchors.bottom = "rootWindow.bottom"
+    fixed_width = 300
+    events = false
+    background_color = #14181f
+    border_width = 0
+
+  Container gamePanel
+    phantom = true
+    anchors.top = "rootWindow.top"
+    anchors.bottom = "rootWindow.bottom"
+    anchors.left = "leftPanel.right"
+    anchors.right = "rightPanel.left"

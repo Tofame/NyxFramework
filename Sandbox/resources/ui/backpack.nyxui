@@ -1,0 +1,23 @@
+# Backpack container window.
+
+[document]
+  root = "BackpackRoot"
+  root-window = "rootWindow"
+
+MiniWindow BackpackRoot
+  title = "Backpack"
+  image_source = "miniwindow.png"
+  image_border = 4
+  image_border_top = 23
+  image_border_bottom = 4
+  text_offset = "24 5"
+  image_smooth = false
+  visible = false
+
+  Container BackpackSlots
+    anchors.left = "parent.left"
+    anchors.right = "parent.right"
+    anchors.top = "parent.top"
+    anchors.bottom = "parent.bottom"
+    phantom = true
+    margin = "4 12 4 4"

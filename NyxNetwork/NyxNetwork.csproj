@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NyxNetwork</RootNamespace>
+    <AssemblyName>NyxNetwork</AssemblyName>
+    <Description>Transport-agnostic networking library supporting TCP and WebSockets for NyxFramework.</Description>
+  </PropertyGroup>
+
+</Project>

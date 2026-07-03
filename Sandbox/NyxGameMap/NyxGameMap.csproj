@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NyxGameMap</RootNamespace>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AssemblyName>NyxGameMap</AssemblyName>
+    <Description>Nyx Framework Map loading, saving, sectors and formats</Description>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\NyxAssets\NyxAssets.csproj" />
+    <ProjectReference Include="..\NyxGameCore\NyxGameCore.csproj" />
+  </ItemGroup>
+</Project>
