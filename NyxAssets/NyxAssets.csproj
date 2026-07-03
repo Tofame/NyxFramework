@@ -31,5 +31,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="docs\API.md" Pack="true" PackagePath="docs\" />
+    <None Include="docs\guides\usage.md" Pack="true" PackagePath="docs\guides\" />
+    <None Include="docs\guides\supported-clients.md" Pack="true" PackagePath="docs\guides\" />
+    <None Include="docs\development\frame-resolver.md" Pack="true" PackagePath="docs\development\" />
   </ItemGroup>
 </Project>

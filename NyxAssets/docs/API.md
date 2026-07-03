@@ -2,12 +2,16 @@
 
 Complete reference for every **public** type and member in the NyxAssets NuGet package (.NET 10).
 
+> **New to NyxAssets?** Start with the package [README](../README.md) — install, quick start, common examples, and an **API at a glance** with method signatures. This document is the full reference.
+
 For usage walkthroughs see [guides/usage.md](guides/usage.md). For on-disk formats see [formats/](formats/). For extending the library see [development/overview.md](development/overview.md).
 
 ---
 
 ## Table of contents
 
+- [Sprite decoding (core API)](#sprite-decoding-core-api)
+- [Public member index](#public-member-index)
 - [Namespaces](#namespaces)
 - [NyxAssets.Client](#nyxassetsclient)
 - [NyxAssets.Things](#nyxassetsthings)
@@ -15,6 +19,159 @@ For usage walkthroughs see [guides/usage.md](guides/usage.md). For on-disk forma
 - [NyxAssets.Sprites](#nyxassetssprites)
 - [NyxAssets.Utils](#nyxassetsutils)
 - [Internal types (not public API)](#internal-types-not-public-api)
+- [Typical call flows](#typical-call-flows)
+
+---
+
+## Sprite decoding (core API)
+
+Sprite decoding is the most common operation in NyxAssets. The same three methods appear on **`ISpriteSource`**, **`SpriteArchive`**, **`AssetArchive`**, and **`ClientAssetBundle`** (which delegates to `Sprites`).
+
+### Where to call from
+
+| Type | When to use |
+|------|-------------|
+| `ClientAssetBundle` | You already loaded `.dat` + `.spr`/`.assets` together — use `bundle.DecodeSpriteById(...)` or `bundle.Sprites.DecodeSpriteById(...)`. |
+| `SpriteArchive` / `AssetArchive` | You only have a sprite file, or you built a custom `ISpriteSource`. |
+| `ISpriteSource` | Library/extension code that must work with any sprite backend. |
+
+### Sprite ids are 1-based
+
+Ids match Asset Editor / client convention: **first sprite is id `1`**, not `0`. Valid range: `1 … SpriteCount`. Id `0` always fails decode.
+
+Sprite ids come from `ThingFrameGroup.SpriteIds`, `ThingFrameSelection.EnumerateSpriteSlots()`, or `ThingType.EnumerateSpriteIdsForOutfit()`.
+
+### Pixel buffer layout
+
+Every decoded legacy `.spr` sprite is **32×32 RGBA**:
+
+| Constant | Value |
+|----------|-------|
+| `SpritePixelCodec.SpriteEdgeLength` | `32` |
+| `SpritePixelCodec.RgbaBufferLength` | `4096` (32×32×4) |
+
+Byte order per pixel: **`R, G, B, A`** (OpenGL `GL_RGBA`). Row-major: pixel `(x, y)` starts at index `(y * 32 + x) * 4`.
+
+`.assets` archives may store variable-sized sprites internally, but `DecodeSpriteById` still writes into a **4096-byte** buffer for API consistency with `.spr`.
+
+---
+
+### `TryDecodeSpriteById`
+
+```csharp
+bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)
+```
+
+**Purpose:** Decode exactly **one** sprite by id into **your** buffer — no allocation. Preferred in hot loops.
+
+| Aspect | Detail |
+|--------|--------|
+| **Parameters** | `spriteId` — 1-based index. `rgbaDestination` — must be ≥ 4096 bytes for `.spr`; for `.assets`, must fit actual pixel bytes (still typically 4096). |
+| **Returns** | `true` if decoded (including **empty** sprites, which zero-fill the buffer). `false` if id out of range, corrupt blob, or decode error. |
+| **Throws** | `ArgumentException` if buffer too small. `ObjectDisposedException` on disposed memory-mapped archives. |
+| **Empty sprites** | Lookup address `0` or zero-length payload → buffer cleared to zeros, returns `true`. Check beforehand with `IsEmptySprite`. |
+| **Performance** | Reuse one `Span<byte>` or `stackalloc byte[4096]` across many ids. Only that sprite's compressed blob is read (random access). |
+
+**Implementations:**
+
+- **`SpriteArchive`** — Reads lookup table offset, RLE-decompresses via `SpritePixelCodec.UncompressToRgba`. Alias: `TryCopySpriteRgba` (identical).
+- **`AssetArchive`** — Decompresses ZSTD page (LRU-cached), copies raw RGBA from page payload.
+- **`ClientAssetBundle`** — Forwards to `Sprites.TryDecodeSpriteById`.
+
+```csharp
+Span<byte> scratch = stackalloc byte[SpritePixelCodec.RgbaBufferLength];
+if (bundle.TryDecodeSpriteById(spriteId, scratch))
+{
+    // use scratch — 4096 bytes RGBA
+}
+```
+
+---
+
+### `DecodeSpriteById`
+
+```csharp
+byte[] DecodeSpriteById(uint spriteId)
+```
+
+**Purpose:** Convenience wrapper — allocates `new byte[4096]`, decodes, returns the array.
+
+| Aspect | Detail |
+|--------|--------|
+| **Returns** | Fresh `byte[4096]` with decoded pixels. |
+| **Throws** | `InvalidDataException` if `TryDecodeSpriteById` would return `false`. Message: `"Sprite {id} is missing or invalid."` |
+| **When to use** | One-off tools, prototyping, or when you need to own the array long-term. |
+| **When to avoid** | Tight loops decoding hundreds of sprites — use `TryDecodeSpriteById` with a reused buffer instead. |
+
+**Aliases** (same behavior, different names):
+
+| Type | Alias |
+|------|-------|
+| `ClientAssetBundle` | `GetSpriteRgba(uint spriteId)` |
+| `SpriteArchive` | `GetSpriteRgbaPixels(uint spriteId)` |
+
+```csharp
+// These are equivalent on ClientAssetBundle:
+byte[] a = bundle.DecodeSpriteById(42);
+byte[] b = bundle.GetSpriteRgba(42);
+byte[] c = bundle.Sprites.DecodeSpriteById(42);
+```
+
+---
+
+### `IsEmptySprite`
+
+```csharp
+bool IsEmptySprite(uint spriteId)
+```
+
+**Purpose:** Check whether a slot has no pixel data before decoding.
+
+| Returns | Meaning |
+|---------|---------|
+| `true` | Id out of range, address `0`, zero-length block, or zero width/height (`.assets`). |
+| `false` | Slot has compressed/raw pixel data. |
+
+Empty slots still decode successfully via `TryDecodeSpriteById` (all-zero buffer).
+
+---
+
+### `SpriteCount`
+
+```csharp
+uint SpriteCount { get; }
+```
+
+Number of sprites in the archive. Valid decode ids: **`1` through `SpriteCount`** inclusive.
+
+---
+
+### End-to-end: thing → sprite id → pixels
+
+```csharp
+using NyxAssets.Client;
+using NyxAssets.Things;
+using NyxAssets.Things.Frames;
+using NyxAssets.Sprites;
+
+var options = new ClientDataReadOptions
+{
+    ClientVersion = new ClientDataVersion(1098),
+    TransparentSprites = true,
+};
+
+using var bundle = ClientAssetBundle.OpenFromFiles("Nyx.dat", "Nyx.spr", options);
+
+// Path A: direct id (you already know the .spr id)
+byte[] pixels = bundle.DecodeSpriteById(100);
+
+// Path B: resolve game frame → ids → decode
+var item = bundle.GetItem(2148);
+var frame = ThingFrameResolver.GetItemFrame(item, new ItemFrameRequest { StackCount = 5 });
+Span<byte> buf = stackalloc byte[SpritePixelCodec.RgbaBufferLength];
+foreach (var slot in frame.EnumerateSpriteSlots())
+    bundle.TryDecodeSpriteById(slot.SpriteId, buf);
+```
 
 ---
 
@@ -61,11 +218,15 @@ High-level entry: one loaded `ThingCatalog` plus one `ISpriteSource` for the sam
 
 #### Sprite decode
 
-| Method | Description |
-|--------|-------------|
-| `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | Decodes one 1-based sprite id into a caller buffer (≥ 4096 bytes). Returns `false` if id is out of range or invalid. |
-| `byte[] DecodeSpriteById(uint spriteId)` | Allocates `byte[4096]` RGBA. Throws `InvalidDataException` on failure. |
+Delegates to `Sprites` (`ISpriteSource`). **Full documentation:** [Sprite decoding (core API)](#sprite-decoding-core-api).
+
+| Method | Summary |
+|--------|---------|
+| `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | No-allocation decode into your buffer (≥ 4096 bytes). |
+| `byte[] DecodeSpriteById(uint spriteId)` | Allocates and returns `byte[4096]`. Throws `InvalidDataException` on failure. |
 | `byte[] GetSpriteRgba(uint spriteId)` | Alias for `DecodeSpriteById`. |
+
+Equivalent via property: `bundle.Sprites.DecodeSpriteById(id)`.
 
 #### Raster export (single sprite)
 
@@ -825,17 +986,19 @@ NyxClient stack pile grid (4×2 patterns for stackable items).
 
 ### `ISpriteSource`
 
-Format-agnostic random-access sprite decoding. Extends `IDisposable`.
+Format-agnostic contract for random-access sprite decoding. Extends `IDisposable`.
 
-| Member | Description |
-|--------|-------------|
-| `uint SpriteCount { get; }` | Number of sprites (1-based ids). |
-| `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | Decode into caller buffer. |
-| `byte[] DecodeSpriteById(uint spriteId)` | Allocate and decode. |
-| `bool IsEmptySprite(uint spriteId)` | True when slot is empty / transparent placeholder. |
-| `void Dispose()` | Release mapped resources (implementations vary). |
+**Implementations:** `SpriteArchive` (`.spr`), `AssetArchive` (`.assets`).
 
-**Implementations:** `SpriteArchive`, `AssetArchive`.
+#### Members
+
+| Member | Summary |
+|--------|---------|
+| `uint SpriteCount { get; }` | Valid ids: `1 … SpriteCount`. |
+| `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | See [TryDecodeSpriteById](#trydecodespritebyid). |
+| `byte[] DecodeSpriteById(uint spriteId)` | See [DecodeSpriteById](#decodespritebyid). |
+| `bool IsEmptySprite(uint spriteId)` | See [IsEmptySprite](#isemptysprite). |
+| `void Dispose()` | Release memory-mapped file handles (`SpriteArchive`, `AssetArchive` when opened with `OpenReadOnlyFile`). No-op for in-memory `Load`. |
 
 ---
 
@@ -862,16 +1025,18 @@ Random access to legacy `.spr` (Asset Editor `SpriteReader`).
 | `static SpriteArchive OpenReadOnlyFile(string sprPath, ClientDataReadOptions options, bool preloadSprites = false)` | Memory-mapped file. |
 | `static SpriteArchive OpenReadOnlyFile(string sprPath, bool extendedSpriteIds, bool transparentPixels, bool preloadSprites = false)` | Explicit flags. |
 
-#### Instance methods
+#### Instance methods — decode
 
-| Method | Description |
-|--------|-------------|
-| `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | On-demand RLE decode (1-based id). |
-| `bool TryCopySpriteRgba(uint spriteId, Span<byte> rgbaDestination)` | Same as above. |
-| `byte[] DecodeSpriteById(uint spriteId)` | Allocates 4096-byte RGBA. |
+Same semantics as [Sprite decoding (core API)](#sprite-decoding-core-api).
+
+| Method | Notes |
+|--------|-------|
+| `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | RLE decode from `.spr` lookup table. |
+| `bool TryCopySpriteRgba(uint spriteId, Span<byte> rgbaDestination)` | **Identical** to `TryDecodeSpriteById`. |
+| `byte[] DecodeSpriteById(uint spriteId)` | Allocates 4096 bytes. |
 | `byte[] GetSpriteRgbaPixels(uint spriteId)` | Alias for `DecodeSpriteById`. |
-| `bool IsEmptySprite(uint spriteId)` | Empty lookup slot. |
-| `void Dispose()` | Releases memory map when applicable. |
+| `bool IsEmptySprite(uint spriteId)` | Lookup address `0` or zero-length payload. |
+| `void Dispose()` | Releases memory map when `IsMemoryMapped == true`. |
 
 ---
 
@@ -916,12 +1081,16 @@ ZSTD page-based `.assets` sprite archive.
 
 #### Instance methods
 
-| Method | Description |
-|--------|-------------|
-| `void SetMaxCachedPages(int count)` | LRU cache size for decompressed pages (default 64). |
-| `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | Decode sprite (variable size; buffer must fit pixel bytes). |
-| `byte[] DecodeSpriteById(uint spriteId)` | Allocates 4096-byte buffer (legacy `.spr` size). |
-| `bool IsEmptySprite(uint spriteId)` | Zero width/height entry. |
+#### Instance methods — decode
+
+Same semantics as [Sprite decoding (core API)](#sprite-decoding-core-api). Buffer for `TryDecodeSpriteById` must fit `width × height × 4` bytes (typically 4096).
+
+| Method | Notes |
+|--------|-------|
+| `void SetMaxCachedPages(int count)` | LRU page cache size (default 64 decompressed ZSTD pages). |
+| `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | Decompresses owning page if not cached. |
+| `byte[] DecodeSpriteById(uint spriteId)` | Allocates 4096-byte buffer. |
+| `bool IsEmptySprite(uint spriteId)` | Zero width/height in page entry. |
 | `void Dispose()` | Releases memory map. |
 
 ---
@@ -1043,6 +1212,230 @@ Asset Editor–style spritesheets (one frame group or all groups stacked).
 | `bool TryWriteThingSpriteSheetPng(ISpriteSource archive, ThingType thing, string filePath)` | |
 | `bool TryWriteThingSpriteSheetJpeg(..., string filePath, int quality = 90)` | |
 | `bool TryWriteThingSpriteSheetBmp(..., string filePath)` | |
+
+---
+
+## Public member index
+
+Alphabetical index of every public member. Method names link to their primary section.
+
+### A
+
+| Member | Type |
+|--------|------|
+| `AddRange` | `AssetArchiveWriter` → [AssetArchiveWriter](#assetarchivewriter) |
+| `AddSprite` | `AssetArchiveWriter` |
+| `AnimationFrameTiming` | [struct](#animationframetiming) |
+| `AssetArchive` | [class](#assetarchive) |
+| `AssetArchiveWriter` | [class](#assetarchivewriter) |
+
+### B
+
+| Member | Type |
+|--------|------|
+| `BlitSpriteBufferOnto` | `SpriteImageExporter` → [Utils](#spriteimageexporter-static) |
+
+### C
+
+| Member | Type |
+|--------|------|
+| `ClientAssetBundle` | [class](#clientassetbundle) |
+| `ClientDataReadOptions` | [class](#clientdatareadoptions) |
+| `ClientDataVersion` | [struct](#clientdataversion) |
+| `CompressRgba` | `SpritePixelCodec` |
+| `ConvertSprToAssets` | `AssetArchiveWriter` |
+
+### D
+
+| Member | Type |
+|--------|------|
+| `DatSignature` | `ThingCatalog` property |
+| `DatThingCatalogReader` | [class](#datthingcatalogreader) |
+| `DatThingCatalogWriter` | [class](#datthingcatalogwriter) |
+| `DatThingFormat` | [enum](#datthingformat-enum) |
+| `DatThingFormatRules` | [static class](#datthingformatrules-static) |
+| **`DecodeSpriteById`** | **`ISpriteSource`, `SpriteArchive`, `AssetArchive`, `ClientAssetBundle`** → **[Sprite decoding](#decodespritebyid)** |
+| `DefaultJpegQuality` | `SpriteImageExporter` const (`90`) |
+| `Direction4` | [enum](#direction4-enum) |
+| `Direction8` | [enum](#direction8-enum) |
+| `DirectionFromTileDelta` | `MissileDirectionPatterns` |
+| `Dispose` | `ClientAssetBundle`, `ISpriteSource`, `SpriteArchive`, `AssetArchive` |
+
+### E
+
+| Member | Type |
+|--------|------|
+| `EffectCount` | `ThingCatalog` property |
+| `EffectFrameRequest` | [struct](#effectframerequest-struct) |
+| `EnumerateEffects` | `ThingCatalog` |
+| `EnumerateItems` | `ThingCatalog` |
+| `EnumerateMissiles` | `ThingCatalog` |
+| `EnumerateMountedOutfitFrames` | `ThingFrameResolver` |
+| `EnumerateOutfitAddonFrames` | `ThingFrameResolver` |
+| `EnumerateOutfits` | `ThingCatalog` |
+| `EnumerateSpriteIds` | `ThingFrameGroup`, `ThingType` |
+| `EnumerateSpriteIdsForOutfit` | `ThingType` |
+| `EnumerateSpriteSlots` | `ThingFrameSelection` |
+| `ExportJson` | `ThingCatalog` |
+| `ExtraProperties` | `ThingType` property |
+
+### F
+
+| Member | Type |
+|--------|------|
+| `FirstEffectId`, `FirstItemId`, `FirstMissileId`, `FirstOutfitId` | `ThingCatalog` constants |
+| `FrameGroups` | `ThingType` property |
+
+### G
+
+| Member | Type |
+|--------|------|
+| `GetCyclicFrameIndex` | `ThingFrameResolver` |
+| `GetEffect` | `ThingCatalog`, `ClientAssetBundle` |
+| `GetEffectFrame` | `ThingFrameResolver` |
+| `GetEffectFrameIndex` | `ThingFrameResolver` |
+| `GetFrameGroup` | `ThingType` |
+| `GetItem` | `ThingCatalog`, `ClientAssetBundle` |
+| `GetItemFrame` | `ThingFrameResolver` |
+| `GetMaxLyingItemRedrawSpan` | `ThingCatalog` |
+| `GetMissile` | `ThingCatalog`, `ClientAssetBundle` |
+| `GetMissileFrame` | `ThingFrameResolver` |
+| `GetMountFrame` | `ThingFrameResolver` |
+| `GetMountedPatternZ` | `ThingFrameResolver` |
+| `GetOutfit` | `ThingCatalog`, `ClientAssetBundle` |
+| `GetOutfitFrame` | `ThingFrameResolver` |
+| `GetPattern` | `MissileDirectionPatterns`, `ItemStackPatterns` |
+| `GetSpriteId` / `GetSpriteIds` | `ThingFrameGroup` |
+| `GetSpriteIdsForOutfit` | `ThingType` |
+| `GetSpriteIndex` | `ThingFrameGroup` |
+| `GetSpriteRgba` | `ClientAssetBundle` → alias for **`DecodeSpriteById`** |
+| `GetSpriteRgbaPixels` | `SpriteArchive` → alias for **`DecodeSpriteById`** |
+| `GetTextureIndex` | `ThingFrameGroup` |
+| `GetTotalSpriteSlots` | `ThingFrameGroup` |
+
+### I
+
+| Member | Type |
+|--------|------|
+| `IsAddonPatternVisible` | `ThingFrameResolver` |
+| `IsEmptySprite` | `ISpriteSource` → [Sprite decoding](#isemptysprite) |
+| `IsRgbaPixelZero` | `SpritePixelCodec` |
+| `ISpriteSource` | [interface](#ispritesource) |
+| `IThingCatalogReader` | [interface](#ithingcatalogreader) |
+| `IThingCatalogWriter` | [interface](#ithingcatalogwriter) |
+| `ItemCount`, `ItemFrameRequest`, `ItemsXmlMerger` | [Things](#nyxassetsthings) |
+
+### J
+
+| Member | Type |
+|--------|------|
+| `JsonThingCatalogReader` | [class](#jsonthingcatalogreader) |
+| `JsonThingCatalogWriter` | [class](#jsonthingcatalogwriter) |
+
+### L
+
+| Member | Type |
+|--------|------|
+| `Load` | `ThingCatalog`, `SpriteArchive`, `AssetArchive`, `ClientAssetBundle` |
+| `LoadFromFiles` | `ClientAssetBundle` |
+| `LoadItemsXml` | `ThingCatalog` |
+| `LoadJson` | `ThingCatalog` |
+
+### M
+
+| Member | Type |
+|--------|------|
+| `MagicSignature` | `AssetArchive` const |
+| `Merge` / `MergeFromFile` | `ItemsXmlMerger` |
+| `MissileCount`, `MissileDirectionPatterns`, `MissileFrameRequest` | [Things.Frames](#nyxassetsthingsframes) |
+
+### N
+
+| Member | Type |
+|--------|------|
+| `NormalizeDirection` | `ThingFrameResolver` |
+
+### O
+
+| Member | Type |
+|--------|------|
+| `OpenAssetsFromFiles` | `ClientAssetBundle` |
+| `OpenFromFiles` | `ClientAssetBundle`, `SpriteArchive`, `AssetArchive` |
+| `OpenFromFilesAuto` | `ClientAssetBundle` |
+| `OutfitCount`, `OutfitFrameRequest` | [Things / Frames](#nyxassetsthings) |
+
+### P
+
+| Member | Type |
+|--------|------|
+| `PageEntry`, `PageCount` | `AssetArchive` |
+| `PositiveMod` | `ThingFrameResolver` |
+| `PutEffect`, `PutItem`, `PutMissile`, `PutOutfit` | `ThingCatalog` |
+
+### R
+
+| Member | Type |
+|--------|------|
+| `Read` | `DatThingCatalogReader`, `JsonThingCatalogReader`, `IThingCatalogReader` |
+| `Resolve` | `ItemStackPatterns` |
+| `ResolveDatThingFormat`, `ResolveDefaultFrameDurationMs`, `ResolveExtendedSpriteIds`, `ResolveImprovedAnimations`, `ResolveOutfitFrameGroups` | `ClientDataReadOptions` |
+| `ResolveWalkingFrame` | `ThingFrameResolver` |
+| `RgbaBufferLength` | `SpritePixelCodec` const (`4096`) |
+
+### S
+
+| Member | Type |
+|--------|------|
+| `Save` | `AssetArchiveWriter` |
+| `SaveBmp`, `SaveJpeg`, `SavePng` | `SpriteImageExporter` |
+| `SelectFromClientVersion` | `DatThingFormatRules` |
+| `SetMaxCachedPages` | `AssetArchive` |
+| `Signature` | `SpriteArchive`, `AssetArchive` |
+| `SpriteArchive` | [class](#spritearchive) |
+| `SpriteCount` | `ISpriteSource` |
+| `SpriteEdgeLength` | `SpritePixelCodec` const (`32`) |
+| `SpriteIndexEntry` | `AssetArchive` struct |
+| `SpritePixelCodec` | [static class](#spritepixelcodec-static) |
+| `SpriteSheetCompiler` | [static class](#spritesheetcompiler-static) |
+| `Sprites` | `ClientAssetBundle` property → `ISpriteSource` |
+
+### T
+
+| Member | Type |
+|--------|------|
+| `ThingCatalog` | [class](#thingcatalog) |
+| `ThingFrameGroup` | [class](#thingframegroup) |
+| `ThingFrameResolver` | [static class](#thingframeresolver-static) |
+| `ThingFrameSelection` | [struct](#thingframeselection-struct) |
+| `ThingKind` | [enum](#thingkind-enum) |
+| `ThingSpriteSheetExporter` | [static class](#thingspritesheetexporter-static) |
+| `ThingType` | [class](#thingtype) |
+| `Things` | `ClientAssetBundle` property → `ThingCatalog` |
+| **`TryDecodeSpriteById`** | **`ISpriteSource`, `SpriteArchive`, `AssetArchive`, `ClientAssetBundle`** → **[Sprite decoding](#trydecodespritebyid)** |
+| `TryCopySpriteRgba` | `SpriteArchive` (alias for `TryDecodeSpriteById`) |
+| `TryDecodeAndWriteBmp/Jpeg/Png` | `SpriteImageExporter` |
+| `TryExportSpriteBmp/Jpeg/Png` | `ClientAssetBundle` |
+| `TryExportFrameGroupSpriteSheet*` | `ClientAssetBundle` |
+| `TryExportThingSpriteSheet*` | `ClientAssetBundle` |
+| `TryGetEffect/Item/Missile/Outfit` | `ThingCatalog` |
+| `TryGetSpriteId` | `ThingFrameGroup` |
+| `TryWriteFrameGroupSpriteSheet*`, `TryWriteThingSpriteSheet*` | `ThingSpriteSheetExporter` |
+
+### U
+
+| Member | Type |
+|--------|------|
+| `UncompressToRgba` | `SpritePixelCodec` |
+| `UsesExtendedSpriteIdsByDefault`, `UsesImprovedAnimationsByDefault`, `UsesOutfitFrameGroupsByDefault`, `UsesStackCountGrid` | `DatThingFormatRules`, `ItemStackPatterns` |
+
+### W
+
+| Member | Type |
+|--------|------|
+| `Write` | `DatThingCatalogWriter`, `JsonThingCatalogWriter`, `IThingCatalogWriter` |
+| `WriteBmp`, `WriteJpeg`, `WritePng` | `SpriteImageExporter` |
+| `WriteDatTo` | `ThingCatalog` |
+| `WriteToStream` | `SpriteSheetCompiler` |
 
 ---
 
