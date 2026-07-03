@@ -60,6 +60,27 @@ using var assets = ClientAssetBundle.OpenFromFiles(
     options);
 ```
 
+## Load `things.json` + `.assets` (no `.dat`)
+
+When you only ship JSON definitions and a ZSTD sprite archive — no binary `.dat` or legacy `.spr`:
+
+```csharp
+var options = new ClientDataReadOptions
+{
+    ClientVersion = new ClientDataVersion(1098),
+    TransparentSprites = true,
+};
+
+ThingCatalog catalog = ThingCatalog.LoadJson(@"C:\Nyx\things.json", options);
+AssetArchive sprites = AssetArchive.OpenReadOnlyFile(@"C:\Nyx\Nyx.assets");
+
+using var assets = new ClientAssetBundle(catalog, sprites, disposeSprites: true);
+
+Console.WriteLine($"Items up to id {assets.Things.ItemCount}, sprites: {assets.Sprites.SpriteCount}");
+```
+
+`OpenFromFilesAuto` does **not** support JSON catalogs yet — it always loads the first path as binary `.dat`. Use the pattern above, or `.dat` + `.assets` via `OpenAssetsFromFiles` / `OpenFromFilesAuto`.
+
 ## Decode exactly one sprite by id (lookup table)
 
 The `.spr` file stores a **per–sprite-id file offset**. NyxAssets never decodes “all textures” unless you loop all ids yourself.

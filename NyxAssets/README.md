@@ -84,15 +84,53 @@ uint count = spr.SpriteCount;
 byte[] pixels = spr.DecodeSpriteById(1);
 ```
 
-### 2 — Modern `.assets` instead of `.spr`
+### 2 — `.dat` + `.assets` (binary catalog + modern sprites)
 
 ```csharp
 using var bundle = ClientAssetBundle.OpenAssetsFromFiles("Nyx.dat", "Nyx.assets", options);
-// or auto by extension:
+// or auto by extension on the sprite path:
 using var bundle = ClientAssetBundle.OpenFromFilesAuto("Nyx.dat", "Nyx.assets", options);
 ```
 
-### 3 — Item with stack count → correct sprite
+`OpenFromFilesAuto` only auto-detects **`.spr` vs `.assets`** — the catalog path must still be **`.dat`**.
+
+### 3 — `things.json` + `.assets` (no `.dat`, no `.spr`)
+
+Use this when you ship a JSON thing catalog and a ZSTD sprite archive only. There is no single helper yet — load each side, then construct the bundle:
+
+```csharp
+using NyxAssets.Client;
+using NyxAssets.Sprites;
+using NyxAssets.Things;
+
+var options = new ClientDataReadOptions
+{
+    ClientVersion = new ClientDataVersion(1098),
+    TransparentSprites = true,
+};
+
+ThingCatalog catalog = ThingCatalog.LoadJson("things.json", options);
+AssetArchive sprites = AssetArchive.OpenReadOnlyFile("Nyx.assets");
+
+using ClientAssetBundle bundle = new ClientAssetBundle(catalog, sprites, disposeSprites: true);
+
+ThingType coin = bundle.GetItem(2148);
+byte[] rgba = bundle.DecodeSpriteById(100);
+```
+
+- **`LoadJson`** — metadata + sprite id layouts from JSON.
+- **`OpenReadOnlyFile`** — memory-maps `.assets`; **`disposeSprites: true`** so `Dispose()` releases the map.
+- Pass **`preloadPages: true`** to `OpenReadOnlyFile` if you want all ZSTD pages decompressed up front.
+
+In-memory variant (no file map to dispose):
+
+```csharp
+ThingCatalog catalog = ThingCatalog.LoadJson(jsonBytes.AsMemory(), options);
+AssetArchive sprites = AssetArchive.Load(assetsBytes.AsMemory());
+using var bundle = new ClientAssetBundle(catalog, sprites, disposeSprites: false);
+```
+
+### 4 — Item with stack count → correct sprite
 
 ```csharp
 using NyxAssets.Things.Frames;
@@ -106,7 +144,7 @@ foreach (ThingFrameSelection.SpriteSlot slot in frame.EnumerateSpriteSlots())
 }
 ```
 
-### 4 — Outfit facing + walking animation
+### 5 — Outfit facing + walking animation
 
 ```csharp
 ThingType player = bundle.GetOutfit(128);
@@ -121,7 +159,7 @@ ThingFrameSelection frame = ThingFrameResolver.GetOutfitFrame(player, request);
 uint[] spriteIds = frame.GetSpriteIds();
 ```
 
-### 5 — Export sprite or spritesheet to PNG
+### 6 — Export sprite or spritesheet to PNG
 
 ```csharp
 using NyxAssets.Utils;
@@ -134,7 +172,7 @@ ThingType item = bundle.GetItem(2148);
 bundle.TryExportThingSpriteSheetPng(item, "item_sheet.png");
 ```
 
-### 6 — `.dat` ↔ JSON
+### 7 — `.dat` ↔ JSON
 
 ```csharp
 var options = new ClientDataReadOptions { ClientVersion = new ClientDataVersion(1098), TransparentSprites = true };
@@ -147,7 +185,7 @@ catalog.ExportJson("things.json", options);
 ThingCatalog fromJson = ThingCatalog.LoadJson("things.json", options);
 ```
 
-### 7 — Build or convert sprite archives
+### 8 — Build or convert sprite archives
 
 ```csharp
 using NyxAssets.Sprites;

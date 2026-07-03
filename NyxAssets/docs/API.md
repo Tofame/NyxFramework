@@ -214,7 +214,7 @@ High-level entry: one loaded `ThingCatalog` plus one `ISpriteSource` for the sam
 | `LoadFromFiles(string datPath, string sprPath, ClientDataReadOptions options)` | Reads entire `.dat` and `.spr` files into memory, then calls `Load`. |
 | `OpenFromFiles(string datPath, string sprPath, ClientDataReadOptions options)` | Reads whole `.dat` into memory; memory-maps `.spr` (no giant `byte[]` for the sheet). **Dispose** the bundle to release the map. |
 | `OpenAssetsFromFiles(string datPath, string assetsPath, ClientDataReadOptions options, bool preloadPages = false)` | Loads `.dat` and opens a ZSTD page-based `.assets` archive. |
-| `OpenFromFilesAuto(string datPath, string spritePath, ClientDataReadOptions options, bool preloadSprites = false)` | Chooses `SpriteArchive` or `AssetArchive` by file extension (`.assets` → assets, otherwise `.spr`). |
+| `OpenFromFilesAuto(string datPath, string spritePath, ClientDataReadOptions options, bool preloadSprites = false)` | Chooses `SpriteArchive` or `AssetArchive` by sprite extension. **Catalog must be `.dat`** — for JSON + `.assets`, see [example 3](../README.md#3--thingsjson--assets-no-dat-no-spr). |
 
 #### Sprite decode
 
@@ -1486,4 +1486,17 @@ foreach (var slot in selection.EnumerateSpriteSlots())
 ```csharp
 var catalog = ThingCatalog.Load(datBytes, options);
 catalog.ExportJson("things.json", options);
+```
+
+### Load JSON catalog + `.assets` (no `.dat`)
+
+```csharp
+var options = new ClientDataReadOptions { ClientVersion = new ClientDataVersion(1098), TransparentSprites = true };
+
+ThingCatalog catalog = ThingCatalog.LoadJson("things.json", options);
+using AssetArchive sprites = AssetArchive.OpenReadOnlyFile("Nyx.assets");
+using var bundle = new ClientAssetBundle(catalog, sprites, disposeSprites: true);
+
+ThingType item = bundle.GetItem(2148);
+byte[] rgba = bundle.DecodeSpriteById(item.FrameGroups[0].SpriteIds[0]);
 ```
