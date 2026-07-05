@@ -4,7 +4,8 @@
 
 **Why it exists:** Previously, reader and writer each maintained a long manual list of property names. Adding a field to `ThingType` required editing two files and was easy to forget. The mapper keeps names and read/write rules in one place.
 
-For the **JSON schema** (what keys mean to tools and game data authors), see [formats/things-json.md](../formats/things-json.md).
+For the **JSON schema** (what keys mean to tools and game data authors), see [formats/things-json.md](../formats/things-json.md).  
+For **single-thing** JSON (`nyx-thing` envelope), see [formats/nyx-thing-json.md](../formats/nyx-thing-json.md) and [thing-exchange.md](thing-exchange.md).
 
 ---
 

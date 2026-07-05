@@ -15,4 +15,10 @@
 	<ItemGroup>
 		<ProjectReference Include="..\NyxAssets.csproj" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Fixtures\Obd\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>

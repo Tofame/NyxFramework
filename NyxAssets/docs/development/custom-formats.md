@@ -1,6 +1,7 @@
 # Custom asset formats
 
-> **Developers:** JSON serialization is centralized in `ThingTypeJsonMapper` — see [json-mapper.md](json-mapper.md). Consumer schema: [formats/things-json.md](../formats/things-json.md).
+> **Developers:** JSON serialization is centralized in `ThingTypeJsonMapper` — see [json-mapper.md](json-mapper.md). Consumer schema: [formats/things-json.md](../formats/things-json.md).  
+> **Single things:** Import/export one item/outfit/effect/missile via [thing-exchange.md](thing-exchange.md) (`ThingDocument`, `.obd`, `nyx-thing` JSON).
 
 NyxAssets ships with Asset Editor `.dat` / `.spr` parsers, but the library is designed to support **alternative asset formats** through three interfaces:
 

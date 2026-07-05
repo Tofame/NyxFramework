@@ -17,6 +17,8 @@ NyxAssets/
 │   ThingCatalog, ThingType, ThingFrameGroup
 │   DatThingCatalogReader/Writer, JsonThingCatalogReader/Writer
 │   ThingTypeJsonMapper          ← JSON field mapping (single source of truth)
+│   ThingJsonCodec               ← public single-object JSON facade
+│   Exchange/                    ← single-thing import/export (JSON + OBD)
 │   ItemsXmlMerger               ← items.xml → ExtraProperties
 ├── Data/
 │   Readers/          Zero-copy .dat parsing (LittleEndianSpanReader, decoders)
@@ -38,8 +40,10 @@ NyxAssets/
 | New thing catalog format | `IThingCatalogReader`, `IThingCatalogWriter` | Populate `ThingCatalog` / read from `ThingCatalog`. JSON is the built-in example. |
 | Merge server item metadata | `ItemsXmlMerger` or `ThingCatalog.LoadItemsXml` | Writes into `ThingType.ExtraProperties` only. |
 | Export images | `SpriteImageExporter`, `ThingSpriteSheetExporter` | Tooling; not used in-game hot paths. |
+| Single-thing import/export | `ThingDocument`, `ThingDocumentJsonCodec`, `ObdThingCodec` | JSON (`nyx-thing`) and Object Builder `.obd`. |
 
-See [custom-formats.md](custom-formats.md) for worked examples (PNG atlas, custom binary, etc.).
+See [custom-formats.md](custom-formats.md) for worked examples (PNG atlas, custom binary, etc.).  
+See [thing-exchange.md](thing-exchange.md) for single-thing JSON/OBD workflows.
 
 ## Common change scenarios
 
@@ -80,5 +84,6 @@ Implement `ISpriteSource`, wire it through `ClientAssetBundle` constructors/fact
 - [json-mapper.md](json-mapper.md) — JSON read/write implementation
 - [frame-resolver.md](frame-resolver.md) — outfit/item/effect/missile frame queries
 - [custom-formats.md](custom-formats.md) — custom reader/writer guide
+- [thing-exchange.md](thing-exchange.md) — single-thing JSON and OBD exchange
 - [formats/things-json.md](../formats/things-json.md) — JSON schema for consumers
 - [guides/usage.md](../guides/usage.md) — end-user API examples

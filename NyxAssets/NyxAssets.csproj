@@ -16,6 +16,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Ecng.Lzma" Version="1.0.65" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     <PackageReference Include="ZstdSharp.Port" Version="0.8.1" />
   </ItemGroup>
@@ -35,5 +36,8 @@
     <None Include="docs\guides\usage.md" Pack="true" PackagePath="docs\guides\" />
     <None Include="docs\guides\supported-clients.md" Pack="true" PackagePath="docs\guides\" />
     <None Include="docs\development\frame-resolver.md" Pack="true" PackagePath="docs\development\" />
+    <None Include="docs\development\thing-exchange.md" Pack="true" PackagePath="docs\development\" />
+    <None Include="docs\formats\nyx-thing-json.md" Pack="true" PackagePath="docs\formats\" />
+    <None Include="docs\formats\obd-binary.md" Pack="true" PackagePath="docs\formats\" />
   </ItemGroup>
 </Project>

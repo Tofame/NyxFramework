@@ -18,6 +18,7 @@ Requires **.NET 10**. You need paired client files (`*.dat` + `*.spr` or `*.asse
 |-----------|------------|------|
 | `NyxAssets.Client` | **`ClientAssetBundle`** | Load `.dat` + sprites together; decode & export |
 | `NyxAssets.Things` | **`ThingCatalog`**, **`ThingType`** | Items, outfits, effects, missiles from `.dat` / JSON |
+| `NyxAssets.Things.Exchange` | **`ThingDocument`**, **`ObdThingCodec`** | Single-thing JSON + Object Builder `.obd` |
 | `NyxAssets.Things.Frames` | **`ThingFrameResolver`** | Direction, walk phase, stack count → sprite ids |
 | `NyxAssets.Sprites` | **`SpriteArchive`**, **`ISpriteSource`** | `.spr` / `.assets` random-access decode |
 | `NyxAssets.Utils` | **`SpriteImageExporter`** | Decoded pixels → PNG / JPEG / BMP |
@@ -359,6 +360,24 @@ DatThingFormat? DatThingFormatOverride { get; init; }
 | **`AssetArchive`** | Modern `.assets` (ZSTD pages) |
 | **`SpriteSheetCompiler`** / **`AssetArchiveWriter`** | Write / convert sprite files |
 | **`SpriteImageExporter`** / **`ThingSpriteSheetExporter`** | PNG/JPEG/BMP export |
+| **`ThingDocument`** / **`ObdThingCodec`** | Single-thing JSON + `.obd` import/export |
+
+---
+
+## Single-thing exchange
+
+Import one Object Builder export or share one definition between projects:
+
+```csharp
+using NyxAssets.Things.Exchange;
+
+var doc = ObdThingCodec.Read("item_test.obd");
+doc.ImportInto(catalog, assignId: 35000);
+
+ThingDocumentJsonCodec.Write("item.json", doc);
+```
+
+See [docs/development/thing-exchange.md](docs/development/thing-exchange.md).
 
 ---
 
@@ -370,6 +389,7 @@ DatThingFormat? DatThingFormatOverride { get; init; }
 | [docs/guides/usage.md](docs/guides/usage.md) | Longer usage guide |
 | [docs/guides/supported-clients.md](docs/guides/supported-clients.md) | Client version / `.dat` tiers |
 | [docs/development/frame-resolver.md](docs/development/frame-resolver.md) | Frame resolver examples |
+| [docs/development/thing-exchange.md](docs/development/thing-exchange.md) | Single-thing JSON + OBD import/export |
 
 On NuGet: open **docs/API.md** from the package folder in your IDE, or browse on GitHub:  
 https://github.com/Tofame/NyxFramework/tree/main/NyxAssets/docs

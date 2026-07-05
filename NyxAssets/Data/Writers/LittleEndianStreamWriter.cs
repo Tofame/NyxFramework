@@ -39,4 +39,12 @@ internal sealed class LittleEndianStreamWriter(Stream stream)
 
     public void WriteBytes(ReadOnlySpan<byte> data) =>
         stream.Write(data);
+
+    public void WriteU32At(long position, uint value)
+    {
+        var saved = stream.Position;
+        stream.Position = position;
+        WriteU32(value);
+        stream.Position = saved;
+    }
 }

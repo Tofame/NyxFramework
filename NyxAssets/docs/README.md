@@ -18,6 +18,8 @@ Documentation for using, extending, and maintaining **NyxAssets** — the .NET l
 | [formats/spr-binary.md](formats/spr-binary.md) | Legacy `.spr` lookup table, sprite blobs, RLE pixel encoding. |
 | [formats/assets-binary.md](formats/assets-binary.md) | Modern `.assets` pages, ZSTD compression, sprite index. |
 | [formats/things-json.md](formats/things-json.md) | JSON catalog schema (`things.json`) — fields, frame groups, `properties`. |
+| [formats/nyx-thing-json.md](formats/nyx-thing-json.md) | Single-thing JSON (`nyx-thing`) — type envelope, embedded sprites. |
+| [formats/obd-binary.md](formats/obd-binary.md) | Object Builder `.obd` binary layout (v1–v3). |
 
 ## Development (extending NyxAssets)
 
@@ -27,6 +29,7 @@ Documentation for using, extending, and maintaining **NyxAssets** — the .NET l
 | [development/json-mapper.md](development/json-mapper.md) | How `ThingTypeJsonMapper` works and how to add JSON fields safely. |
 | [development/frame-resolver.md](development/frame-resolver.md) | `ThingFrameResolver` — direction, addons, stack piles, missile aim → sprite ids. |
 | [development/custom-formats.md](development/custom-formats.md) | Implementing `ISpriteSource`, `IThingCatalogReader`, `IThingCatalogWriter`. |
+| [development/thing-exchange.md](development/thing-exchange.md) | **Single-thing import/export** — `ThingDocument`, JSON (`nyx-thing`), Object Builder `.obd`. |
 
 ## Quick links from the repo root
 

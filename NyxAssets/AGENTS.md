@@ -5,6 +5,7 @@ This project is responsible for reading and writing client data files (specifica
 ## Architecture & Responsibilities
 
 - **Thing Catalog**: `ThingCatalog` stores definitions for items, outfits, effects, and missiles. Supports importing/exporting from legacy binary `.dat` formats and modern JSON catalog representations.
+- **Thing Exchange**: `ThingDocument`, `ThingDocumentJsonCodec`, and `ObdThingCodec` import/export **single** things as `nyx-thing` JSON or Object Builder `.obd` (with optional embedded sprite pixels).
 - **Sprite Archive**: `SpriteArchive` manages sprite lookups and reading RLE-compressed 32×32 pixel buffers from `.spr` files.
 - **Client Asset Bundle**: `ClientAssetBundle` wraps both `ThingCatalog` and an `ISpriteSource` to serve as the unified resource container for rendering systems.
 
@@ -29,3 +30,4 @@ This project is responsible for reading and writing client data files (specifica
 | Extend NyxAssets | [docs/development/overview.md](docs/development/overview.md) |
 | JSON mapper | [docs/development/json-mapper.md](docs/development/json-mapper.md) |
 | Frame resolver | [docs/development/frame-resolver.md](docs/development/frame-resolver.md) |
+| Thing exchange | [docs/development/thing-exchange.md](docs/development/thing-exchange.md) |

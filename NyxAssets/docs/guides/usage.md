@@ -20,6 +20,7 @@ Or pack NyxAssets as a NuGet package and add a normal package reference.
 using NyxAssets.Client;
 using NyxAssets.Utils;
 using NyxAssets.Things;
+using NyxAssets.Things.Exchange;
 using NyxAssets.Sprites;
 ```
 
@@ -385,12 +386,51 @@ using var bundle = new ClientAssetBundle(catalog, sprites, disposeSprites: true)
 
 See [development/custom-formats.md](../development/custom-formats.md) for full implementation guides and examples.
 
+## Single-thing import/export (JSON + OBD)
+
+For **one** item, outfit, effect, or missile — including Object Builder `.obd` files — use the exchange API (`NyxAssets.Things.Exchange`).
+
+```csharp
+using NyxAssets.Things.Exchange;
+
+var options = new ClientDataReadOptions
+{
+    ClientVersion = new ClientDataVersion(1098),
+    TransparentSprites = true,
+};
+
+// Import Object Builder .obd
+var doc = ObdThingCodec.Read(@"C:\exports\item_test.obd", options);
+doc.ImportInto(catalog, assignId: 35000); // OBD has no thing id
+
+// Export to nyx-thing JSON (metadata + embedded sprites)
+using var bundle = ClientAssetBundle.OpenFromFiles("Nyx.dat", "Nyx.spr", options);
+var portable = ThingDocument.FromThing(catalog.GetOutfit(128), bundle.Sprites, options);
+ThingDocumentJsonCodec.Write("outfit-128.json", portable);
+
+// JSON → OBD for Object Builder
+var loaded = ThingDocumentJsonCodec.Read("outfit-128.json");
+File.WriteAllBytes("outfit-128.obd", ObdThingCodec.Write(loaded, options, ObdVersions.Version3));
+```
+
+| API | Purpose |
+|-----|---------|
+| `ThingDocument` | In-memory thing + optional `SpritesRgba` |
+| `ThingDocumentJsonCodec` | Read/write `nyx-thing` JSON (`type`: item/outfit/effect/missile) |
+| `ObdThingCodec` | Read/write Object Builder `.obd` (v1–v3) |
+
+Full guide: [development/thing-exchange.md](../development/thing-exchange.md).  
+Formats: [formats/nyx-thing-json.md](../formats/nyx-thing-json.md), [formats/obd-binary.md](../formats/obd-binary.md).
+
 ## See also
 
 - [supported-clients.md](supported-clients.md)
 - [formats/spr-binary.md](../formats/spr-binary.md)
 - [formats/dat-binary.md](../formats/dat-binary.md)
 - [formats/things-json.md](../formats/things-json.md)
+- [formats/nyx-thing-json.md](../formats/nyx-thing-json.md)
+- [formats/obd-binary.md](../formats/obd-binary.md)
 - [formats/assets-binary.md](../formats/assets-binary.md)
 - [development/custom-formats.md](../development/custom-formats.md)
+- [development/thing-exchange.md](../development/thing-exchange.md)
 - [README.md](../README.md)

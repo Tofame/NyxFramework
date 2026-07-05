@@ -15,6 +15,7 @@ For usage walkthroughs see [guides/usage.md](guides/usage.md). For on-disk forma
 - [Namespaces](#namespaces)
 - [NyxAssets.Client](#nyxassetsclient)
 - [NyxAssets.Things](#nyxassetsthings)
+- [NyxAssets.Things.Exchange](#nyxassetsthingsexchange)
 - [NyxAssets.Things.Frames](#nyxassetsthingsframes)
 - [NyxAssets.Sprites](#nyxassetssprites)
 - [NyxAssets.Utils](#nyxassetsutils)
@@ -632,6 +633,74 @@ How to interpret a `.dat` / `.spr` pair for a given client build.
 |--------|-------------|
 | `void MergeFromFile(ThingCatalog catalog, string filePath)` | Loads TFS-style `items.xml` and merges attributes into matching items' `ExtraProperties`. |
 | `void Merge(ThingCatalog catalog, Stream input)` | Same from stream. |
+
+---
+
+## NyxAssets.Things.Exchange
+
+Single-thing import/export: one item, outfit, effect, or missile with optional embedded 32×32 RGBA sprite pixels. Supports **nyx-thing JSON** and Object Builder **`.obd`**.
+
+→ Full guide: [development/thing-exchange.md](development/thing-exchange.md)  
+→ Formats: [formats/nyx-thing-json.md](formats/nyx-thing-json.md), [formats/obd-binary.md](formats/obd-binary.md)
+
+### `ThingDocument`
+
+| Member | Description |
+|--------|-------------|
+| `ThingType Thing { get; init; }` | Metadata, frame groups, `ExtraProperties`. |
+| `uint ClientVersion { get; init; }` | Client build (default `1098`). |
+| `ushort ObdVersion { get; init; }` | `0` for JSON; `100`/`200`/`300` when from/to OBD. |
+| `Dictionary<uint, byte[]>? SpritesRgba { get; init; }` | Decoded 4096-byte RGBA per sprite id. |
+| `ThingKind Kind => Thing.Kind` | Item / outfit / effect / missile. |
+| `IEnumerable<uint> EnumerateSpriteIds()` | All sprite ids in frame groups. |
+| `void ImportInto(ThingCatalog catalog, uint? assignId = null)` | `Put*` into catalog; optional id override (needed for OBD). |
+| `static ThingDocument FromThing(ThingType thing, uint clientVersion = 1098)` | Metadata-only document. |
+| `static ThingDocument FromThing(ThingType thing, ISpriteSource sprites, ClientDataReadOptions options, bool embedSprites = true)` | Resolves pixels from sprite source. |
+
+### `ThingDocumentJsonCodec` (static)
+
+| Constant / method | Description |
+|-------------------|-------------|
+| `FormatName` | `"nyx-thing"` |
+| `FormatVersion` | `1` |
+| `Read(ReadOnlyMemory<byte> json)` / `Read(string filePath)` / `Read(JsonElement root)` | Parse JSON → `ThingDocument`. Requires `type`. |
+| `Write(ThingDocument document, Stream output, bool indent = true, bool includeSprites = true)` | Write JSON. |
+| `Write(string filePath, ThingDocument document, …)` | Write file. |
+| `Write(ThingDocument document, Utf8JsonWriter writer, bool includeSprites = true)` | Write to existing writer. |
+| `FromObd(ReadOnlyMemory<byte> obdBytes, ClientDataReadOptions? options = null)` | OBD bytes → document. |
+| `ToObd(ThingDocument document, ClientDataReadOptions options, ushort? obdVersion = null)` | Document → OBD bytes. |
+
+### `ObdThingCodec` (static)
+
+| Method | Description |
+|--------|-------------|
+| `Read(ReadOnlyMemory<byte> obdBytes, ClientDataReadOptions? options = null)` | LZMA-decompress and parse OBD v1–v3. |
+| `Read(string filePath, ClientDataReadOptions? options = null)` | Read file. |
+| `Write(ThingDocument document, ClientDataReadOptions options, ushort? obdVersion = null)` | Requires `SpritesRgba`; returns LZMA-compressed bytes. |
+| `Write(string filePath, ThingDocument document, ClientDataReadOptions options, ushort? obdVersion = null)` | Write file. |
+
+### `ObdVersions` (static)
+
+| Constant | Value |
+|----------|-------|
+| `Version1` | `100` |
+| `Version2` | `200` |
+| `Version3` | `300` |
+| `IsSupported(ushort version)` | True for 100/200/300. |
+
+### `ThingKindNames` (static)
+
+| Method | Description |
+|--------|-------------|
+| `ToName(ThingKind kind)` | `"item"`, `"outfit"`, `"effect"`, `"missile"`. |
+| `FromName(string name)` | Parse type string (case-insensitive). |
+
+### `ThingJsonCodec` (static, namespace `NyxAssets.Things`)
+
+| Method | Description |
+|--------|-------------|
+| `Read(JsonElement elem, ThingKind kind)` | Parse one thing object (no envelope). |
+| `Write(Utf8JsonWriter writer, ThingType thing)` | Write thing fields into current JSON object. |
 
 ---
 

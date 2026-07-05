@@ -4,6 +4,8 @@
 
 The `things.json` file is a modern JSON-based metadata format used by `NyxFramework` as a successor to Nyx's legacy `Nyx.dat` file and SERVER server-specific `items.xml` files. It catalogs items, outfits, effects, and missiles in a single, human-readable file, supporting nested custom property serialization.
 
+> **Single-thing exports** use the [`nyx-thing`](nyx-thing-json.md) envelope (`type` + one object, optional embedded sprites) instead of these four arrays. See [development/thing-exchange.md](../development/thing-exchange.md).
+
 ---
 
 ## 1. High-Level Structure

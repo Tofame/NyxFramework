@@ -106,13 +106,18 @@ internal static class ThingTypeJsonMapper
     public static void WriteThing(Utf8JsonWriter writer, ThingType thing)
     {
         writer.WriteStartObject();
+        WriteThingFields(writer, thing);
+        writer.WriteEndObject();
+    }
+
+    /// <summary>Writes thing fields into the current JSON object (no surrounding object).</summary>
+    public static void WriteThingFields(Utf8JsonWriter writer, ThingType thing)
+    {
         writer.WriteNumber("id", thing.Id);
 
         WriteScalarFields(writer, thing);
         WriteFrameGroups(writer, thing);
         WriteExtraProperties(writer, thing.ExtraProperties);
-
-        writer.WriteEndObject();
     }
 
     private static void ReadScalarFields(JsonElement elem, ThingType thing)
