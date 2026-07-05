@@ -50,6 +50,8 @@ public static class ObdThingCodec
                 throw new InvalidOperationException($"Sprite {spriteId} is missing from SpritesRgba.");
         }
 
+        EnsureObdAnimationMetadata(document.Thing, options);
+
         using var body = new MemoryStream();
         var writer = new LittleEndianStreamWriter(body);
 
@@ -80,10 +82,11 @@ public static class ObdThingCodec
         if (document.ObdVersion is ObdVersions.Version1 or ObdVersions.Version2 or ObdVersions.Version3)
             return document.ObdVersion;
 
+        // Object Builder defaults: v3 only for multi-group outfits; v2 for everything else.
         if (document.Thing.Kind == ThingKind.Outfit && document.Thing.FrameGroups.Count > 1)
             return ObdVersions.Version3;
 
-        return ObdVersions.Version3;
+        return ObdVersions.Version2;
     }
 
     private static ThingDocument ReadV1(ref LittleEndianSpanReader reader, ushort clientVersion, ClientDataReadOptions? options)
@@ -253,4 +256,26 @@ public static class ObdThingCodec
 
     private static ClientDataReadOptions CreateDefaultOptions(uint clientVersion) =>
         new() { ClientVersion = new ClientDataVersion(clientVersion), TransparentSprites = true };
+
+    /// <summary>
+    /// Object Builder decoders read an animation block whenever <c>frames &gt; 1</c>, even if
+    /// <c>isAnimation</c> was false in the editor model.
+    /// </summary>
+    private static void EnsureObdAnimationMetadata(ThingType thing, ClientDataReadOptions options)
+    {
+        foreach (var fg in thing.FrameGroups)
+        {
+            if (fg.Frames <= 1)
+                continue;
+
+            fg.IsAnimation = true;
+            if (fg.FrameTimings is null || fg.FrameTimings.Length != fg.Frames)
+            {
+                var ms = options.ResolveDefaultFrameDurationMs(thing.Kind);
+                fg.FrameTimings = new AnimationFrameTiming[fg.Frames];
+                for (var i = 0u; i < fg.Frames; i++)
+                    fg.FrameTimings[i] = new AnimationFrameTiming(ms, ms);
+            }
+        }
+    }
 }

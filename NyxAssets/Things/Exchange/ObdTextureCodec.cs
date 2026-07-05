@@ -153,13 +153,15 @@ internal static class ObdTextureCodec
             writer.WriteU8((byte)(fg.PatternZ == 0 ? 1 : fg.PatternZ));
         writer.WriteU8((byte)fg.Frames);
 
-        if (fg.IsAnimation && fg.Frames > 1)
+        if (fg.Frames > 1)
         {
+            fg.IsAnimation = true;
             writer.WriteU8((byte)fg.AnimationMode);
             writer.WriteI32(fg.LoopCount);
             writer.WriteU8(unchecked((byte)fg.StartFrame));
+
             if (fg.FrameTimings is null || fg.FrameTimings.Length != fg.Frames)
-                throw new InvalidOperationException("FrameTimings must match frame count.");
+                throw new InvalidOperationException("FrameTimings must match frame count when frames > 1.");
 
             foreach (var timing in fg.FrameTimings)
             {
@@ -200,9 +202,18 @@ internal static class ObdTextureCodec
                 if (dataSize > SpritePixelCodec.RgbaBufferLength)
                     throw new InvalidDataException("Invalid OBD sprite data size.");
 
-                var compressed = reader.ReadBytes((int)dataSize);
-                ObdSpritePixels.DecompressFromObd(compressed, transparentSprites, rgba);
-                spritesRgba[spriteId] = rgba.ToArray();
+                if (dataSize == SpritePixelCodec.RgbaBufferLength)
+                {
+                    var argb = reader.ReadBytes(SpritePixelCodec.RgbaBufferLength);
+                    ObdSpritePixels.ObjectBuilderArgbToRgba(argb, rgba);
+                    spritesRgba[spriteId] = rgba.ToArray();
+                }
+                else
+                {
+                    var compressed = reader.ReadBytes((int)dataSize);
+                    ObdSpritePixels.DecompressFromObd(compressed, transparentSprites, rgba);
+                    spritesRgba[spriteId] = rgba.ToArray();
+                }
             }
         }
     }
@@ -228,9 +239,10 @@ internal static class ObdTextureCodec
             }
             else
             {
-                var compressed = ObdSpritePixels.CompressForObd(rgba, transparentSprites);
-                writer.WriteU32((uint)compressed.Length);
-                writer.WriteBytes(compressed);
+                // OBD v3 (Object Builder): uint32 length + 4096-byte Flash ARGB — not .spr RLE.
+                var argb = ObdSpritePixels.RgbaToObjectBuilderArgb(rgba);
+                writer.WriteU32((uint)argb.Length);
+                writer.WriteBytes(argb);
             }
         }
     }
@@ -256,8 +268,17 @@ internal static class ObdTextureCodec
             if (dataSize > SpritePixelCodec.RgbaBufferLength)
                 throw new InvalidDataException("Invalid OBD sprite data size.");
 
-            var compressed = reader.ReadBytes((int)dataSize);
-            ObdSpritePixels.DecompressFromObd(compressed, transparentSprites, rgba);
+            if (dataSize == SpritePixelCodec.RgbaBufferLength)
+            {
+                var argb = reader.ReadBytes(SpritePixelCodec.RgbaBufferLength);
+                ObdSpritePixels.ObjectBuilderArgbToRgba(argb, rgba);
+            }
+            else
+            {
+                var compressed = reader.ReadBytes((int)dataSize);
+                ObdSpritePixels.DecompressFromObd(compressed, transparentSprites, rgba);
+            }
+
             spritesRgba[spriteId] = rgba.ToArray();
         }
     }
@@ -273,10 +294,10 @@ internal static class ObdTextureCodec
             if (!spritesRgba.TryGetValue(spriteId, out var rgba))
                 throw new InvalidDataException($"Sprite {spriteId} is missing from embedded sprite data.");
 
-            var compressed = ObdSpritePixels.CompressForObd(rgba, transparentSprites);
+            var argb = ObdSpritePixels.RgbaToObjectBuilderArgb(rgba);
             writer.WriteU32(spriteId);
-            writer.WriteU32((uint)compressed.Length);
-            writer.WriteBytes(compressed);
+            writer.WriteU32((uint)argb.Length);
+            writer.WriteBytes(argb);
         }
     }
 }

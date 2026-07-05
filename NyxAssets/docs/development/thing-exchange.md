@@ -285,11 +285,13 @@ The fixture file is a **2×2 item** exported from Object Builder (OBD v2, client
 ## Limitations and pitfalls
 
 1. **No thing id in OBD** — assign on `ImportInto`.
-2. **OBD v3 compressed sprite size ≤ 4096** — use v2 for dense sprites.
-3. **Catalog id rules** — `PutOutfit` / `PutItem` still enforce contiguous append rules; importing id `128` into an empty catalog may fail — use the next free id or pre-populate the catalog.
-4. **Sprite injection** — exchange decodes/encodes pixels but does not patch `.spr` / `.assets`; id remapping is your responsibility.
-5. **Client version** — OBD stores the authoring client; property flags on v1 exports use the matching `DatThingFormat` tier. Mismatching client versions may mis-decode rare flags.
-6. **v1 OBD write** — uses legacy `DatThingPropertySerializer` paths; prefer v2/v3 for new exports unless targeting very old Object Builder workflows.
+2. **OBD v3 sprites are 4096-byte ARGB** (not `.spr` RLE) — matches Object Builder `OBDEncoder.encodeV3`.
+3. **Animation block required when `frames > 1`** — Object Builder always reads animation metadata in that case, even if `isAnimation` was false in the model. NyxAssets fills default timings on export.
+4. **Default export version** — v2 for items/effects/missiles; v3 only for multi-group outfits.
+5. **Catalog id rules** — `PutOutfit` / `PutItem` still enforce contiguous append rules; importing id `128` into an empty catalog may fail — use the next free id or pre-populate the catalog.
+6. **Sprite injection** — exchange decodes/encodes pixels but does not patch `.spr` / `.assets`; id remapping is your responsibility.
+7. **Client version** — OBD stores the authoring client; property flags on v1 exports use the matching `DatThingFormat` tier. Mismatching client versions may mis-decode rare flags.
+8. **v1 OBD write** — uses legacy `DatThingPropertySerializer` paths; prefer v2/v3 for new exports unless targeting very old Object Builder workflows.
 
 ---
 

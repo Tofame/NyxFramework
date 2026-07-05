@@ -64,7 +64,7 @@ After client version (first uint16):
 | Category | UTF-8 string | Flash `readUTF`: uint16 LE length + bytes (`"item"`, `"outfit"`, …) |
 | Properties | flag stream | Uses `DatThingFormat` for client version (MetadataReader1–6) |
 | Frame group | binary | Single group; patternZ always read |
-| Sprites | id + RLE | uint32 id, uint32 size, `size` bytes RLE payload |
+| Sprites | id + ARGB | uint32 id, uint32 size (`4096`), `4096` bytes Flash ARGB |
 
 ---
 
@@ -135,9 +135,13 @@ For each sprite slot:
 |-------|------|
 | spriteId | uint32 |
 | dataSize | uint32 |
-| payload | `dataSize` bytes RLE (same family as `.spr`) |
+| payload | `dataSize` bytes |
 
-**Constraint (Object Builder):** `dataSize ≤ 4096`. Dense artwork may fail export in v3; use v2 (fixed ARGB) instead.
+**Object Builder format:** `dataSize` is **`4096`** and `payload` is **uncompressed Flash ARGB** (`A,R,G,B` per pixel) — the same pixels as OBD v2, with a length prefix.
+
+NyxAssets also accepts legacy exports where `dataSize < 4096` and `payload` is `.spr` RLE (for backward compatibility with early Nyx exports).
+
+**Constraint (Object Builder):** `dataSize` must be **≤ 4096**.
 
 ---
 
@@ -146,7 +150,7 @@ For each sprite slot:
 | Choose | When |
 |--------|------|
 | **v3 (`300`)** | Default; outfits with idle/walk frame groups; modern Object Builder |
-| **v2 (`200`)** | Simple items/effects; large or dense sprites that exceed v3 RLE size limit |
+| **v2 (`200`)** | Default for items, effects, missiles; fixed 4096-byte ARGB sprites |
 | **v1 (`100`)** | Legacy clients; category string format; single frame group |
 
 Object Builder UI picks v3 automatically for outfits when the client supports frame groups.
