@@ -198,6 +198,33 @@ AssetArchiveWriter.ConvertSprToAssets("Nyx.spr", "Nyx.assets", extendedSpriteIds
 SpriteSheetCompiler.WriteToStream(outputStream, sprSignature: 0x12345678, extendedSpriteIds: true, transparentPixels: true, rgbaPerSpriteIdOneBased);
 ```
 
+### 9 — Add or remove sprites and things in memory
+
+```csharp
+using NyxAssets.Client;
+using NyxAssets.Sprites;
+using NyxAssets.Things;
+
+var options = new ClientDataReadOptions { ClientVersion = new ClientDataVersion(1098), TransparentSprites = true };
+using var bundle = ClientAssetBundle.OpenFromFiles("Nyx.dat", "Nyx.spr", options);
+
+// Add or replace a sprite by id (1-based) and write the updated archive back out.
+bundle.PutSprite(42, rgbaBuffer);
+
+// Remove an existing sprite slot (returns false when the slot did not exist)
+bundle.RemoveSprite(7);
+
+// Add or replace a thing definition. New ids must be contiguous with the section bounds.
+var newItem = new ThingType { Id = bundle.Things.ItemCount + 1, Kind = ThingKind.Item };
+newItem.FrameGroups.Add(new ThingFrameGroup { SpriteIds = new uint[] { 42 }, Width = 1, Height = 1, ExactSize = 32, Layers = 1, PatternX = 1, PatternY = 1, PatternZ = 1, Frames = 1 });
+bundle.PutItem(newItem);
+
+// Remove an existing definition by id.
+bundle.RemoveItem(100);
+```
+
+`PutSprite` / `RemoveSprite` are available on `ClientAssetBundle`, `SpriteArchive`, `AssetArchive`, and `ISpriteSource` implementations that support mutation. `RemoveItem` / `RemoveOutfit` / `RemoveEffect` / `RemoveMissile` are available on `ThingCatalog` and `ClientAssetBundle`.
+
 ---
 
 ## Sprite decoding

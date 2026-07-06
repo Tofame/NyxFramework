@@ -217,6 +217,30 @@ public class ThingCatalogTests
 	}
 
 	[Fact]
+	public void TestThingCatalog_CanRemoveThings()
+	{
+		var catalog = new ThingCatalog();
+		var item = new ThingType { Id = 100, Kind = ThingKind.Item };
+		item.FrameGroups.Add(new ThingFrameGroup
+		{
+			Width = 1,
+			Height = 1,
+			ExactSize = 32,
+			Layers = 1,
+			PatternX = 1,
+			PatternY = 1,
+			PatternZ = 1,
+			Frames = 1,
+			SpriteIds = new uint[] { 1 }
+		});
+
+		catalog.PutItem(item);
+		Assert.True(catalog.RemoveItem(100));
+		Assert.False(catalog.RemoveItem(100));
+		Assert.Throws<KeyNotFoundException>(() => catalog.GetItem(100));
+	}
+
+	[Fact]
 	public void TestGetItem_OutOfBounds_ThrowsKeyNotFoundException()
 	{
 		var catalog = new ThingCatalog(123, 99, 0, 0, 0, DatThingFormat.V6_10_10__10_56);

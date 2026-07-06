@@ -32,6 +32,8 @@ public sealed class AssetArchive : ISpriteSource
 	private readonly MemoryMappedFile? _mappedFile;
 	private readonly MemoryMappedViewAccessor? _mappedView;
 	private bool _disposed;
+	private readonly Dictionary<uint, byte[]?> _spriteOverrides = new();
+	private uint _spriteCount;
 
 	public const uint MagicSignature = 0x54535341; // 'ASST'
 	private const int HeaderSize = 16; // 4 bytes signature + 4 bytes version + 4 bytes pageCount + 4 bytes spriteCount
@@ -80,16 +82,16 @@ public sealed class AssetArchive : ISpriteSource
 		Signature = signature;
 		Version = version;
 		PageCount = pageCount;
-		SpriteCount = spriteCount;
 		_index = index;
 		_pageTable = pageTable;
 		_preloadedPages = preloadedPages;
+		_spriteCount = spriteCount;
 	}
 
 	public uint Signature { get; }
 	public uint Version { get; }
 	public uint PageCount { get; }
-	public uint SpriteCount { get; }
+	public uint SpriteCount => _spriteCount;
 
 	public static AssetArchive Load(ReadOnlyMemory<byte> fileData, bool preloadPages = false)
 	{
@@ -333,6 +335,21 @@ public sealed class AssetArchive : ISpriteSource
 		if (spriteId == 0 || spriteId > SpriteCount)
 			return false;
 
+		if (_spriteOverrides.TryGetValue(spriteId, out var overrideSprite))
+		{
+			if (overrideSprite == null)
+			{
+				rgbaDestination.Clear();
+				return true;
+			}
+
+			if (rgbaDestination.Length < overrideSprite.Length)
+				throw new ArgumentException("Buffer must be at least 4096 bytes.", nameof(rgbaDestination));
+
+			overrideSprite.AsSpan().CopyTo(rgbaDestination);
+			return true;
+		}
+
 		var indexEntry = _index[spriteId - 1];
 		if (indexEntry.PageId >= PageCount)
 			return false;
@@ -380,11 +397,128 @@ public sealed class AssetArchive : ISpriteSource
 		return buf;
 	}
 
+	public void PutSprite(uint spriteId, byte[] rgba)
+	{
+		ThrowIfDisposed();
+		ArgumentNullException.ThrowIfNull(rgba);
+		if (spriteId == 0)
+			throw new ArgumentOutOfRangeException(nameof(spriteId));
+		if (rgba.Length != SpritePixelCodec.RgbaBufferLength)
+			throw new ArgumentException($"Sprite buffer must be {SpritePixelCodec.RgbaBufferLength} bytes.", nameof(rgba));
+
+		var copy = new byte[SpritePixelCodec.RgbaBufferLength];
+		rgba.AsSpan().CopyTo(copy);
+		_spriteOverrides[spriteId] = copy;
+		if (spriteId > _spriteCount)
+			_spriteCount = spriteId;
+	}
+
+	public bool RemoveSprite(uint spriteId)
+	{
+		ThrowIfDisposed();
+		if (spriteId == 0 || spriteId > SpriteCount)
+			return false;
+
+		if (_spriteOverrides.TryGetValue(spriteId, out var overrideSprite))
+		{
+			if (overrideSprite == null)
+				return false;
+
+			_spriteOverrides[spriteId] = null;
+			if (spriteId == _spriteCount)
+				RecalculateSpriteCount();
+			return true;
+		}
+
+		if (!HasOriginalSprite(spriteId))
+			return false;
+
+		_spriteOverrides[spriteId] = null;
+		if (spriteId == _spriteCount)
+			RecalculateSpriteCount();
+		return true;
+	}
+
+	public void WriteToStream(Stream output)
+	{
+		ThrowIfDisposed();
+		ArgumentNullException.ThrowIfNull(output);
+
+		var tempPath = Path.Combine(Path.GetTempPath(), $"nyx-assets-{Guid.NewGuid():N}.assets");
+		var writer = new AssetArchiveWriter();
+		try
+		{
+			for (var spriteId = 1u; spriteId <= SpriteCount; spriteId++)
+			{
+				if (_spriteOverrides.TryGetValue(spriteId, out var overrideSprite))
+				{
+					if (overrideSprite == null)
+					{
+						writer.AddSprite(0, 0, ReadOnlySpan<byte>.Empty);
+						continue;
+					}
+
+					writer.AddSprite(SpritePixelCodec.SpriteEdgeLength, SpritePixelCodec.SpriteEdgeLength, overrideSprite);
+					continue;
+				}
+
+				var rgba = new byte[SpritePixelCodec.RgbaBufferLength];
+				if (TryDecodeSpriteById(spriteId, rgba))
+					writer.AddSprite(SpritePixelCodec.SpriteEdgeLength, SpritePixelCodec.SpriteEdgeLength, rgba);
+				else
+					writer.AddSprite(0, 0, ReadOnlySpan<byte>.Empty);
+			}
+
+			writer.Save(tempPath, compressionLevel: 3, spritesPerPage: 2048);
+			using var fs = File.OpenRead(tempPath);
+			fs.CopyTo(output);
+		}
+		finally
+		{
+			if (File.Exists(tempPath))
+				File.Delete(tempPath);
+		}
+	}
+
+	private bool HasOriginalSprite(uint spriteId)
+	{
+		if (spriteId == 0 || spriteId > _index.Length)
+			return false;
+
+		var indexEntry = _index[spriteId - 1];
+		if (indexEntry.PageId >= PageCount)
+			return false;
+
+		var pageEntry = _pageTable[indexEntry.PageId];
+		return indexEntry.LocalIndex < pageEntry.SpriteCount;
+	}
+
+	private void RecalculateSpriteCount()
+	{
+		for (var spriteId = _spriteCount; spriteId > 0; spriteId--)
+		{
+			if (_spriteOverrides.TryGetValue(spriteId, out var overrideSprite))
+			{
+				if (overrideSprite != null)
+					return;
+				continue;
+			}
+
+			if (HasOriginalSprite(spriteId))
+				return;
+		}
+
+		_spriteCount = 0;
+	}
+
 	public bool IsEmptySprite(uint spriteId)
 	{
 		ThrowIfDisposed();
 		if (spriteId == 0 || spriteId > SpriteCount)
 			return true;
+
+		if (_spriteOverrides.TryGetValue(spriteId, out var overrideSprite))
+			return overrideSprite == null;
 
 		var indexEntry = _index[spriteId - 1];
 		if (indexEntry.PageId >= PageCount)

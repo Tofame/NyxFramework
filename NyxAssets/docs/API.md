@@ -310,9 +310,13 @@ All object types loaded from a client `.dat` or JSON catalog.
 | Method | Description |
 |--------|-------------|
 | `void PutItem(ThingType thing, bool rebuildArrays = true)` | Register or replace an item. New ids must be contiguous append (`ItemCount + 1`). |
+| `bool RemoveItem(uint id, bool rebuildArrays = true)` | Remove an item by id if it exists. Rebuilds the fast lookup arrays when requested. |
 | `void PutOutfit(ThingType thing, bool rebuildArrays = true)` | Register or replace an outfit. |
+| `bool RemoveOutfit(uint id, bool rebuildArrays = true)` | Remove an outfit by id if it exists. |
 | `void PutEffect(ThingType thing, bool rebuildArrays = true)` | Register or replace an effect. |
+| `bool RemoveEffect(uint id, bool rebuildArrays = true)` | Remove an effect by id if it exists. |
 | `void PutMissile(ThingType thing, bool rebuildArrays = true)` | Register or replace a missile. |
+| `bool RemoveMissile(uint id, bool rebuildArrays = true)` | Remove a missile by id if it exists. |
 
 #### Lookup
 
@@ -1055,7 +1059,7 @@ NyxClient stack pile grid (4×2 patterns for stackable items).
 
 ### `ISpriteSource`
 
-Format-agnostic contract for random-access sprite decoding. Extends `IDisposable`.
+Format-agnostic contract for random-access sprite decoding and mutation. Extends `IDisposable`.
 
 **Implementations:** `SpriteArchive` (`.spr`), `AssetArchive` (`.assets`).
 
@@ -1067,6 +1071,9 @@ Format-agnostic contract for random-access sprite decoding. Extends `IDisposable
 | `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | See [TryDecodeSpriteById](#trydecodespritebyid). |
 | `byte[] DecodeSpriteById(uint spriteId)` | See [DecodeSpriteById](#decodespritebyid). |
 | `bool IsEmptySprite(uint spriteId)` | See [IsEmptySprite](#isemptysprite). |
+| `void PutSprite(uint spriteId, byte[] rgba)` | Add or replace a sprite slot by 1-based id. Valid for writable sprite sources such as `SpriteArchive` and `AssetArchive`. |
+| `bool RemoveSprite(uint spriteId)` | Remove an existing sprite slot and return whether it existed. |
+| `void WriteToStream(Stream output)` | Serialize the current sprite set back to a stream. Writable sources choose their own on-disk format. |
 | `void Dispose()` | Release memory-mapped file handles (`SpriteArchive`, `AssetArchive` when opened with `OpenReadOnlyFile`). No-op for in-memory `Load`. |
 
 ---
@@ -1105,6 +1112,9 @@ Same semantics as [Sprite decoding (core API)](#sprite-decoding-core-api).
 | `byte[] DecodeSpriteById(uint spriteId)` | Allocates 4096 bytes. |
 | `byte[] GetSpriteRgbaPixels(uint spriteId)` | Alias for `DecodeSpriteById`. |
 | `bool IsEmptySprite(uint spriteId)` | Lookup address `0` or zero-length payload. |
+| `void PutSprite(uint spriteId, byte[] rgba)` | Add or replace a sprite slot by 1-based id in memory. |
+| `bool RemoveSprite(uint spriteId)` | Remove an existing sprite slot in memory and return whether it existed. |
+| `void WriteToStream(Stream output)` | Serialize the current sprite set back to a stream. |
 | `void Dispose()` | Releases memory map when `IsMemoryMapped == true`. |
 
 ---
@@ -1160,6 +1170,9 @@ Same semantics as [Sprite decoding (core API)](#sprite-decoding-core-api). Buffe
 | `bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination)` | Decompresses owning page if not cached. |
 | `byte[] DecodeSpriteById(uint spriteId)` | Allocates 4096-byte buffer. |
 | `bool IsEmptySprite(uint spriteId)` | Zero width/height in page entry. |
+| `void PutSprite(uint spriteId, byte[] rgba)` | Add or replace a sprite slot in memory. |
+| `bool RemoveSprite(uint spriteId)` | Remove an existing sprite slot in memory. |
+| `void WriteToStream(Stream output)` | Serialize the current sprite set back to a stream. |
 | `void Dispose()` | Releases memory map. |
 
 ---

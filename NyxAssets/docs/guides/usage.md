@@ -323,6 +323,41 @@ catalog.WriteDatTo(outDat, options, datSignatureOverride: null);
 
 If you add **new sprite ids** at the end of the `.spr`, extend the sprite sheet (see above) **before** or **together** with patching `.dat`, and point new `ThingType` sprite indices at those ids.
 
+## Edit sprites and things in memory
+
+NyxAssets now supports editor-style mutation for the in-memory catalog and sprite archive so you can patch bundled assets without only loading them.
+
+```csharp
+using NyxAssets.Client;
+using NyxAssets.Sprites;
+using NyxAssets.Things;
+
+var options = new ClientDataReadOptions { ClientVersion = new ClientDataVersion(1098), TransparentSprites = true };
+using var bundle = ClientAssetBundle.OpenFromFiles("Nyx.dat", "Nyx.spr", options);
+
+// Add a sprite slot or replace an existing slot by 1-based id.
+bundle.PutSprite(500, rgbaBuffer);
+
+// Remove an existing sprite slot (returns false if the slot was already empty/missing)
+bundle.RemoveSprite(42);
+
+// Save the updated sprite archive to disk.
+using var spriteOut = File.Create("Nyx.updated.spr");
+bundle.Sprites.WriteToStream(spriteOut);
+
+// Add a new item definition and remove one that no longer exists.
+var newItem = new ThingType { Id = bundle.Things.ItemCount + 1, Kind = ThingKind.Item };
+newItem.FrameGroups.Add(new ThingFrameGroup { SpriteIds = new uint[] { 500 }, Width = 1, Height = 1, ExactSize = 32, Layers = 1, PatternX = 1, PatternY = 1, PatternZ = 1, Frames = 1 });
+bundle.PutItem(newItem);
+bundle.RemoveItem(100);
+
+// Write the updated catalog back out.
+using var datOut = File.Create("Nyx.updated.dat");
+bundle.Things.WriteDatTo(datOut, options);
+```
+
+For `.spr`-backed implementations, `PutSprite`/`RemoveSprite` are available on `SpriteArchive` itself. For `.assets` archives, `AssetArchive` supports the same operations and can be written back out. For custom `ISpriteSource` implementations, the interface exposes the same operations so your editor can use one abstraction.
+
 ## Compile (write) `.dat` (V1–V6)
 
 After loading a catalog, you can write it back with the same texture layout flags you use at runtime; property bytes follow Asset Editor’s `MetadataWriter` for that catalog’s `DatFormat`:

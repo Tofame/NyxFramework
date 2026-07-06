@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace NyxAssets.Sprites;
 
 /// <summary>
@@ -13,4 +15,13 @@ public interface ISpriteSource : IDisposable
     byte[] DecodeSpriteById(uint spriteId);
 
     bool IsEmptySprite(uint spriteId);
+
+    /// <summary>Stores or replaces a sprite entry by 1-based id.</summary>
+    void PutSprite(uint spriteId, byte[] rgba);
+
+    /// <summary>Removes a sprite entry by 1-based id when present.</summary>
+    bool RemoveSprite(uint spriteId);
+
+    /// <summary>Writes the current sprite set to a stream.</summary>
+    void WriteToStream(Stream output);
 }

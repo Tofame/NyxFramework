@@ -24,6 +24,7 @@ public sealed class SpriteArchive : ISpriteSource
     private readonly MemoryMappedViewAccessor? _mappedView;
     private readonly int _headerSize;
     private readonly byte[][]? _preloadedSprites;
+    private byte[]?[]? _spriteBuffers;
     private bool _disposed;
 
     private SpriteArchive(
@@ -47,10 +48,17 @@ public sealed class SpriteArchive : ISpriteSource
         SpriteCount = spriteCount;
         _headerSize = extendedSpriteIds ? 8 : 6;
         _preloadedSprites = preloadedSprites;
+        if (preloadedSprites is not null)
+        {
+            var buffers = new byte[(int)spriteCount + 1][];
+            for (var id = 1u; id <= spriteCount; id++)
+                buffers[id] = preloadedSprites[(int)id - 1];
+            _spriteBuffers = buffers;
+        }
     }
 
     public uint Signature { get; }
-    public uint SpriteCount { get; }
+    public uint SpriteCount { get; private set; }
     public bool UsesExtendedSpriteIds { get; }
     public bool TransparentPixels { get; }
 
@@ -190,6 +198,25 @@ public sealed class SpriteArchive : ISpriteSource
         if (rgbaDestination.Length < SpritePixelCodec.RgbaBufferLength)
             throw new ArgumentException("Buffer must be at least 4096 bytes.", nameof(rgbaDestination));
 
+        if (_spriteBuffers != null)
+        {
+            if (spriteId >= (uint)_spriteBuffers.Length)
+            {
+                rgbaDestination.Clear();
+                return true;
+            }
+
+            var buffer = _spriteBuffers[spriteId];
+            if (buffer == null)
+            {
+                rgbaDestination.Clear();
+                return true;
+            }
+
+            buffer.AsSpan().CopyTo(rgbaDestination);
+            return true;
+        }
+
         if (_preloadedSprites != null)
         {
             var preloaded = _preloadedSprites[spriteId - 1];
@@ -258,6 +285,77 @@ public sealed class SpriteArchive : ISpriteSource
         }
 
         return true;
+    }
+
+    public void PutSprite(uint spriteId, byte[] rgba)
+    {
+        ArgumentNullException.ThrowIfNull(rgba);
+        if (spriteId == 0)
+            throw new ArgumentOutOfRangeException(nameof(spriteId));
+        if (rgba.Length != SpritePixelCodec.RgbaBufferLength)
+            throw new ArgumentException($"Sprite buffer must be {SpritePixelCodec.RgbaBufferLength} bytes.", nameof(rgba));
+
+        EnsureMutableSpriteTable();
+        if (spriteId >= (uint)_spriteBuffers!.Length)
+        {
+            var expanded = new byte[]?[(int)spriteId + 1];
+            Array.Copy(_spriteBuffers, expanded, _spriteBuffers.Length);
+            _spriteBuffers = expanded;
+        }
+
+        var copy = new byte[SpritePixelCodec.RgbaBufferLength];
+        rgba.AsSpan().CopyTo(copy);
+        _spriteBuffers![spriteId] = copy;
+        if (spriteId > SpriteCount)
+            SpriteCount = spriteId;
+    }
+
+    public bool RemoveSprite(uint spriteId)
+    {
+        if (spriteId == 0)
+            return false;
+
+        EnsureMutableSpriteTable();
+        if (spriteId >= (uint)_spriteBuffers!.Length)
+            return false;
+
+        var existed = _spriteBuffers[spriteId] != null;
+        _spriteBuffers[spriteId] = null;
+        if (existed && spriteId == SpriteCount)
+        {
+            while (SpriteCount > 0 && (SpriteCount >= (uint)_spriteBuffers.Length || _spriteBuffers[SpriteCount] == null))
+                SpriteCount--;
+        }
+
+        return existed;
+    }
+
+    public void WriteToStream(Stream output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        EnsureMutableSpriteTable();
+
+        var rgbaPerSpriteIdOneBased = new byte[]?[(int)SpriteCount + 1];
+        for (var id = 1u; id <= SpriteCount; id++)
+            rgbaPerSpriteIdOneBased[id] = _spriteBuffers![id];
+
+        SpriteSheetCompiler.WriteToStream(output, Signature, UsesExtendedSpriteIds, TransparentPixels, rgbaPerSpriteIdOneBased);
+    }
+
+    private void EnsureMutableSpriteTable()
+    {
+        if (_spriteBuffers != null)
+            return;
+
+        var buffers = new byte[]?[(int)SpriteCount + 1];
+        for (var id = 1u; id <= SpriteCount; id++)
+        {
+            var rgba = new byte[SpritePixelCodec.RgbaBufferLength];
+            if (TryCopySpriteRgba(id, rgba))
+                buffers[id] = IsEmptySprite(id) ? null : rgba;
+        }
+
+        _spriteBuffers = buffers;
     }
 
     private static bool TryDecodeSpriteFromBacking(
@@ -403,6 +501,13 @@ public sealed class SpriteArchive : ISpriteSource
         ThrowIfDisposed();
         if (spriteId == 0 || spriteId > SpriteCount)
             return true;
+
+        if (_spriteBuffers != null)
+        {
+            if (spriteId >= (uint)_spriteBuffers.Length)
+                return true;
+            return _spriteBuffers[spriteId] == null;
+        }
 
         if (_preloadedSprites != null)
         {

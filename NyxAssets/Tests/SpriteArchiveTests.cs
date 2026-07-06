@@ -61,6 +61,95 @@ public class SpriteArchiveTests
 	}
 
 	[Fact]
+	public void TestSprArchive_CanAppendAndRemoveSprites()
+	{
+		var sprite1 = new byte[SpritePixelCodec.RgbaBufferLength];
+		var sprite2 = new byte[SpritePixelCodec.RgbaBufferLength];
+		for (var i = 0; i < sprite1.Length; i += 4)
+		{
+			sprite1[i] = 10;
+			sprite1[i + 1] = 20;
+			sprite1[i + 2] = 30;
+			sprite1[i + 3] = 255;
+			sprite2[i] = 40;
+			sprite2[i + 1] = 50;
+			sprite2[i + 2] = 60;
+			sprite2[i + 3] = 255;
+		}
+
+		using var ms = new MemoryStream();
+		SpriteSheetCompiler.WriteToStream(ms, 0x55AA, extendedSpriteIds: false, transparentPixels: true, new byte[]?[] { null, sprite1, sprite2 });
+		using var archive = SpriteArchive.Load(ms.ToArray(), extendedSpriteIds: false, transparentPixels: true, preloadSprites: true);
+
+		var sprite3 = new byte[SpritePixelCodec.RgbaBufferLength];
+		for (var i = 0; i < sprite3.Length; i += 4)
+		{
+			sprite3[i] = 70;
+			sprite3[i + 1] = 80;
+			sprite3[i + 2] = 90;
+			sprite3[i + 3] = 255;
+		}
+
+		archive.PutSprite(3, sprite3);
+		Assert.Equal(sprite3, archive.DecodeSpriteById(3));
+
+		Assert.True(archive.RemoveSprite(2));
+		Assert.True(archive.IsEmptySprite(2));
+		Assert.Equal(3u, archive.SpriteCount);
+	}
+
+	[Fact]
+	public void TestAssetArchive_CanAppendAndRemoveSprites()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.assets");
+		try
+		{
+			var writer = new AssetArchiveWriter();
+			var sprite1 = new byte[SpritePixelCodec.RgbaBufferLength];
+			var sprite2 = new byte[SpritePixelCodec.RgbaBufferLength];
+			for (var i = 0; i < sprite1.Length; i += 4)
+			{
+				sprite1[i] = 10;
+				sprite1[i + 1] = 20;
+				sprite1[i + 2] = 30;
+				sprite1[i + 3] = 255;
+				sprite2[i] = 40;
+				sprite2[i + 1] = 50;
+				sprite2[i + 2] = 60;
+				sprite2[i + 3] = 255;
+			}
+
+			writer.AddSprite(32, 32, sprite1);
+			writer.AddSprite(0, 0, ReadOnlySpan<byte>.Empty);
+			writer.Save(tempPath);
+
+			using var archive = AssetArchive.Load(File.ReadAllBytes(tempPath).AsMemory(), preloadPages: true);
+			Assert.Equal(2u, archive.SpriteCount);
+
+			var sprite3 = new byte[SpritePixelCodec.RgbaBufferLength];
+			for (var i = 0; i < sprite3.Length; i += 4)
+			{
+				sprite3[i] = 70;
+				sprite3[i + 1] = 80;
+				sprite3[i + 2] = 90;
+				sprite3[i + 3] = 255;
+			}
+
+			archive.PutSprite(3, sprite3);
+			Assert.Equal(sprite3, archive.DecodeSpriteById(3));
+
+			Assert.True(archive.RemoveSprite(2));
+			Assert.True(archive.IsEmptySprite(2));
+			Assert.Equal(3u, archive.SpriteCount);
+		}
+		finally
+		{
+			if (File.Exists(tempPath))
+				File.Delete(tempPath);
+		}
+	}
+
+	[Fact]
 	public void TestSprArchive_NegativeScenarios()
 	{
 		// Empty / too small byte array

@@ -71,17 +71,33 @@ public sealed class ThingCatalog
     public void PutItem(ThingType thing, bool rebuildArrays = true) =>
         PutThing(thing, ThingKind.Item, FirstItemId, _items, rebuildArrays);
 
+    /// <summary>Removes an item by id if present.</summary>
+    public bool RemoveItem(uint id, bool rebuildArrays = true) =>
+        RemoveThing(ThingKind.Item, id, _items, rebuildArrays);
+
     /// <summary>Registers or replaces an outfit. New ids must be contiguous: exactly <c>OutfitCount + 1</c> when appending.</summary>
     public void PutOutfit(ThingType thing, bool rebuildArrays = true) =>
         PutThing(thing, ThingKind.Outfit, FirstOutfitId, _outfits, rebuildArrays);
+
+    /// <summary>Removes an outfit by id if present.</summary>
+    public bool RemoveOutfit(uint id, bool rebuildArrays = true) =>
+        RemoveThing(ThingKind.Outfit, id, _outfits, rebuildArrays);
 
     /// <summary>Registers or replaces an effect. New ids must be contiguous: exactly <c>EffectCount + 1</c> when appending.</summary>
     public void PutEffect(ThingType thing, bool rebuildArrays = true) =>
         PutThing(thing, ThingKind.Effect, FirstEffectId, _effects, rebuildArrays);
 
+    /// <summary>Removes an effect by id if present.</summary>
+    public bool RemoveEffect(uint id, bool rebuildArrays = true) =>
+        RemoveThing(ThingKind.Effect, id, _effects, rebuildArrays);
+
     /// <summary>Registers or replaces a missile. New ids must be contiguous: exactly <c>MissileCount + 1</c> when appending.</summary>
     public void PutMissile(ThingType thing, bool rebuildArrays = true) =>
         PutThing(thing, ThingKind.Missile, FirstMissileId, _missiles, rebuildArrays);
+
+    /// <summary>Removes a missile by id if present.</summary>
+    public bool RemoveMissile(uint id, bool rebuildArrays = true) =>
+        RemoveThing(ThingKind.Missile, id, _missiles, rebuildArrays);
 
     private void PutThing(
         ThingType thing,
@@ -109,6 +125,48 @@ public sealed class ThingCatalog
 
         if (rebuildArrays)
             InitializeFastArrays();
+    }
+
+    private bool RemoveThing(ThingKind kind, uint id, Dictionary<uint, ThingType> bucket, bool rebuildArrays)
+    {
+        if (!bucket.Remove(id))
+            return false;
+
+        RecalculateInclusiveMax(kind);
+        if (rebuildArrays)
+            InitializeFastArrays();
+
+        return true;
+    }
+
+    private void RecalculateInclusiveMax(ThingKind kind)
+    {
+        var max = 0u;
+        switch (kind)
+        {
+            case ThingKind.Item:
+                foreach (var key in _items.Keys)
+                    max = Math.Max(max, key);
+                ItemCount = max;
+                break;
+            case ThingKind.Outfit:
+                foreach (var key in _outfits.Keys)
+                    max = Math.Max(max, key);
+                OutfitCount = max;
+                break;
+            case ThingKind.Effect:
+                foreach (var key in _effects.Keys)
+                    max = Math.Max(max, key);
+                EffectCount = max;
+                break;
+            case ThingKind.Missile:
+                foreach (var key in _missiles.Keys)
+                    max = Math.Max(max, key);
+                MissileCount = max;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(kind));
+        }
     }
 
     private uint GetInclusiveMax(ThingKind kind) =>

@@ -67,6 +67,28 @@ public sealed class ClientAssetBundle : IDisposable
     public bool TryDecodeSpriteById(uint spriteId, Span<byte> rgbaDestination) =>
         Sprites.TryDecodeSpriteById(spriteId, rgbaDestination);
 
+    public void PutSprite(uint spriteId, byte[] rgba) => Sprites.PutSprite(spriteId, rgba);
+
+    public bool RemoveSprite(uint spriteId) => Sprites.RemoveSprite(spriteId);
+
+    public void WriteSpritesToStream(Stream output) => Sprites.WriteToStream(output);
+
+    public void PutItem(ThingType thing, bool rebuildArrays = true) => Things.PutItem(thing, rebuildArrays);
+
+    public bool RemoveItem(uint id, bool rebuildArrays = true) => Things.RemoveItem(id, rebuildArrays);
+
+    public void PutOutfit(ThingType thing, bool rebuildArrays = true) => Things.PutOutfit(thing, rebuildArrays);
+
+    public bool RemoveOutfit(uint id, bool rebuildArrays = true) => Things.RemoveOutfit(id, rebuildArrays);
+
+    public void PutEffect(ThingType thing, bool rebuildArrays = true) => Things.PutEffect(thing, rebuildArrays);
+
+    public bool RemoveEffect(uint id, bool rebuildArrays = true) => Things.RemoveEffect(id, rebuildArrays);
+
+    public void PutMissile(ThingType thing, bool rebuildArrays = true) => Things.PutMissile(thing, rebuildArrays);
+
+    public bool RemoveMissile(uint id, bool rebuildArrays = true) => Things.RemoveMissile(id, rebuildArrays);
+
     /// <summary>1-based sprite id → 32×32 RGBA buffer (new allocation).</summary>
     public byte[] DecodeSpriteById(uint spriteId) => Sprites.DecodeSpriteById(spriteId);
 
