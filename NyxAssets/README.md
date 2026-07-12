@@ -123,6 +123,26 @@ byte[] rgba = bundle.DecodeSpriteById(100);
 - **`OpenReadOnlyFile`** — memory-maps `.assets`; **`disposeSprites: true`** so `Dispose()` releases the map.
 - Pass **`preloadPages: true`** to `OpenReadOnlyFile` if you want all ZSTD pages decompressed up front.
 
+### 4 — Load client data with `.otfi` configuration
+
+If your assets directory contains a `Tibia.otfi` (OTClient format configuration), you can parse it to automatically configure transparency, extended sprite IDs, and other features:
+
+```csharp
+using NyxAssets.Client;
+
+// Load and parse the OTFI file
+var otfi = OtfiFile.Load("Tibia.otfi");
+
+// Generate ClientDataReadOptions (version will be inferred if not specified)
+var options = otfi.ToReadOptions(); // or otfi.ToReadOptions(1098) to explicitly set version
+
+// Use the resolved options to load assets
+using var bundle = ClientAssetBundle.OpenFromFiles(
+    otfi.MetadataFile ?? "Tibia.dat",
+    otfi.SpritesFile ?? "Tibia.spr",
+    options);
+```
+
 In-memory variant (no file map to dispose):
 
 ```csharp

@@ -82,6 +82,26 @@ Console.WriteLine($"Items up to id {assets.Things.ItemCount}, sprites: {assets.S
 
 `OpenFromFilesAuto` does **not** support JSON catalogs yet — it always loads the first path as binary `.dat`. Use the pattern above, or `.dat` + `.assets` via `OpenAssetsFromFiles` / `OpenFromFilesAuto`.
 
+## Load client data with `.otfi` configuration
+
+If your assets directory contains a `Tibia.otfi` (OTClient format configuration), you can parse it to automatically configure transparency, extended sprite IDs, and other features:
+
+```csharp
+using NyxAssets.Client;
+
+// Load and parse the OTFI file
+var otfi = OtfiFile.Load("Tibia.otfi");
+
+// Generate ClientDataReadOptions (version will be inferred if not specified)
+var options = otfi.ToReadOptions(); // or otfi.ToReadOptions(1098) to explicitly set version
+
+// Use the resolved options to load assets
+using var bundle = ClientAssetBundle.OpenFromFiles(
+    otfi.MetadataFile ?? "Tibia.dat",
+    otfi.SpritesFile ?? "Tibia.spr",
+    options);
+```
+
 ## Decode exactly one sprite by id (lookup table)
 
 The `.spr` file stores a **per–sprite-id file offset**. NyxAssets never decodes “all textures” unless you loop all ids yourself.
