@@ -73,4 +73,4 @@ Depending on the type of application you are building, here are the projects you
 | **Graphical Map Editor / Sprite Viewer** | `NyxGUI`, `NyxGUIRender`, `NyxAssets`, `NyxGameMap`, `NyxGameCore`, `NyxRender` | Visual tool requiring map visualization, catalog lookup, and declarative window UI. |
 | **Headless Game Server** | `NyxNetwork`, `NyxGameMap`, `NyxGameCore` | Handles connection protocols, validates movement pathfinding, and reads NBM/SEC map files on tick. No rendering dependencies. |
 | **CLI Map Converter / Generator** | `NyxGameMap`, `NyxGameCore` | Reads and writes NBM or custom `.sec` sectors. Runs completely headless. |
-| **Asset Packer / Sprite Extractor** | `NyxAssets` | standalone extractor/compiler for `.spr` and `.dat` client files. Depends only on `SixLabors.ImageSharp`. |
+| **Asset Packer / Sprite Extractor** | `NyxAssets` | standalone extractor/compiler for `.spr` and `.dat` client files. Depends only on `SkiaSharp`. |

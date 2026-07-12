@@ -1,5 +1,4 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 using NyxAssets.Sprites;
 using NyxAssets.Things;
 
@@ -67,14 +66,14 @@ public static class ThingSpriteSheetExporter
         return TryWriteThingSpriteSheetBmp(archive, thing, fs);
     }
 
-    private delegate void SaveRaster(Image<Rgba32> image, Stream stream);
+    private delegate void SaveRaster(SKBitmap image, Stream stream);
 
     private static bool TryWriteFrameGroupSpriteSheet(ISpriteSource archive, ThingFrameGroup group, SaveRaster save, Stream destination)
     {
         if (!TryGetFrameGroupBitmapDimensions(group, out var totalX, out var bitmapW, out var bitmapH))
             return false;
 
-        using var sheet = new Image<Rgba32>(bitmapW, bitmapH, default);
+        using var sheet = new SKBitmap(bitmapW, bitmapH);
         Span<byte> scratch = stackalloc byte[SpritePixelCodec.RgbaBufferLength];
         CompositeFrameGroupOnto(sheet, archive, group, totalX, group.Width, group.Height, scratch, destYOffsetPixels: 0);
         save(sheet, destination);
@@ -89,7 +88,7 @@ public static class ThingSpriteSheetExporter
         if (!TryGetThingSpriteSheetDimensions(thing, out var totalX, out var maxTileW, out var maxTileH, out var bitmapW, out var bitmapH))
             return false;
 
-        using var sheet = new Image<Rgba32>(bitmapW, bitmapH, default);
+        using var sheet = new SKBitmap(bitmapW, bitmapH);
         Span<byte> scratch = stackalloc byte[SpritePixelCodec.RgbaBufferLength];
         var cell = SpritePixelCodec.SpriteEdgeLength;
         var pixelsH = (int)(maxTileH * (uint)cell);
@@ -168,7 +167,7 @@ public static class ThingSpriteSheetExporter
 
     /// <summary>Places sprites for one group into <paramref name="sheet"/> (Asset Editor <c>ThingData.getSpriteSheet</c> loop).</summary>
     private static void CompositeFrameGroupOnto(
-        Image<Rgba32> sheet,
+        SKBitmap sheet,
         ISpriteSource archive,
         ThingFrameGroup group,
         int totalXColumns,

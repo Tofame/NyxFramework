@@ -1,13 +1,8 @@
 using System.Numerics;
 using NyxGui;
-using SixLabors.Fonts;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing.Processing;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 using NyxGuiRender.Gl;
 using Silk.NET.OpenGL;
-using DrawColor = SixLabors.ImageSharp.Color;
 
 namespace NyxGuiRender.Text;
 
@@ -21,9 +16,9 @@ internal readonly record struct GlyphInfo(
 internal sealed class GuiFontRasterizer : IDisposable
 {
     private readonly GL? _gl;
-    private Font? _font;
+    private SKFont? _font;
+    private SKTypeface? _typeface;
     private bool _hardenPixels;
-    private TextOptions? _textOptions;
     
     private GuiFontAtlas? _atlas;
     private readonly Dictionary<char, GlyphInfo> _glyphs = new();
@@ -48,14 +43,18 @@ internal sealed class GuiFontRasterizer : IDisposable
             return false;
         try
         {
-            var family = new FontCollection().Add(path);
-            _font = family.CreateFont(sizePt, style);
-            _hardenPixels = hardenPixels;
-            _textOptions = new TextOptions(_font)
+            var skStyle = style switch
             {
-                KerningMode = KerningMode.Standard,
-                HintingMode = HintingMode.None
+                FontStyle.Bold => SKFontStyle.Bold,
+                FontStyle.Italic => SKFontStyle.Italic,
+                FontStyle.BoldItalic => SKFontStyle.BoldItalic,
+                _ => SKFontStyle.Normal
             };
+            _typeface = SKTypeface.FromFile(path);
+            if (_typeface is null)
+                return false;
+            _font = new SKFont(_typeface, sizePt);
+            _hardenPixels = hardenPixels;
             return true;
         }
         catch
@@ -71,10 +70,14 @@ internal sealed class GuiFontRasterizer : IDisposable
             return true;
 
         var s = c.ToString();
-        var b = TextMeasurer.MeasureBounds(s, _textOptions!);
-        float advanceX = TextMeasurer.MeasureAdvance(s, _textOptions!).Width;
+        ReadOnlySpan<char> charSpan = stackalloc char[] { c };
+        Span<ushort> glyphs = stackalloc ushort[1];
+        _font!.GetGlyphs(charSpan, glyphs);
+        float advanceX = _font.MeasureText(glyphs, out var bounds);
+        _font.GetFontMetrics(out var metrics);
+        var ascent = metrics.Ascent;
 
-        if (b.Width <= 0 || b.Height <= 0)
+        if (bounds.Width <= 0 || bounds.Height <= 0)
         {
             info = new GlyphInfo(0, 0, 0, 0, 0, 0, 0, 0, advanceX);
             cache[c] = info;
@@ -82,13 +85,13 @@ internal sealed class GuiFontRasterizer : IDisposable
         }
 
         const int pad = 8;
-        float originX = -b.X + pad;
-        float originY = -b.Y + pad;
+        float originX = -bounds.Left + pad;
+        float originY = -bounds.Top + pad;
 
         if (outlined)
         {
-            int innerW = (int)Math.Ceiling(b.Width) + pad * 2;
-            int innerH = (int)Math.Ceiling(b.Height) + pad * 2;
+            int innerW = (int)Math.Ceiling(bounds.Width) + pad * 2;
+            int innerH = (int)Math.Ceiling(bounds.Height) + pad * 2;
             var ow = innerW + 2;
             var oh = innerH + 2;
             var pixels = new byte[ow * oh * 4];
@@ -96,8 +99,8 @@ internal sealed class GuiFontRasterizer : IDisposable
             var innerPixels = RasterCharWhite(s, innerW, innerH, originX, originY, harden: true);
             ComposeOutlinedDilate(innerPixels, innerW, innerH, pixels, ow, oh);
 
-            float outOffsetX = b.X - pad - 1f;
-            float outOffsetY = b.Y - pad - 1f;
+            float outOffsetX = bounds.Left - pad - 1f;
+            float outOffsetY = -ascent + bounds.Top - pad - 1f;
 
             if (_atlas!.TryAddGlyph(ow, oh, pixels, out var uvX, out var uvY))
             {
@@ -114,12 +117,12 @@ internal sealed class GuiFontRasterizer : IDisposable
         }
         else
         {
-            int w = (int)Math.Ceiling(b.Width) + pad * 2;
-            int h = (int)Math.Ceiling(b.Height) + pad * 2;
+            int w = (int)Math.Ceiling(bounds.Width) + pad * 2;
+            int h = (int)Math.Ceiling(bounds.Height) + pad * 2;
             var pixels = RasterCharWhite(s, w, h, originX, originY, harden: _hardenPixels);
 
-            float offsetX = b.X - pad;
-            float offsetY = b.Y - pad;
+            float offsetX = bounds.Left - pad;
+            float offsetY = -ascent + bounds.Top - pad;
 
             if (_atlas!.TryAddGlyph(w, h, pixels, out var uvX, out var uvY))
             {
@@ -140,15 +143,31 @@ internal sealed class GuiFontRasterizer : IDisposable
 
     private byte[] RasterCharWhite(string s, int w, int h, float originX, float originY, bool harden)
     {
-        using var image = new Image<Rgba32>(w, h);
-        image.Mutate(ctx =>
-        {
-            ctx.Fill(DrawColor.Transparent);
-            ctx.DrawText(s, _font!, DrawColor.White, new PointF(originX, originY));
-        });
+        var info = new SKImageInfo(w, h, SKColorType.Rgba8888, SKAlphaType.Premul);
+        using var surface = SKSurface.Create(info);
+        if (surface is null)
+            return new byte[w * h * 4];
+
+        var canvas = surface.Canvas;
+        canvas.Clear(SKColors.Transparent);
+
+        using var paint = new SKPaint();
+        paint.Color = SKColors.White;
+        paint.IsAntialias = !harden;
+        
+        canvas.DrawText(s, originX, originY, SKTextAlign.Left, _font!, paint);
+        canvas.Flush();
 
         var pixels = new byte[w * h * 4];
-        image.CopyPixelDataTo(pixels);
+        using var image = surface.Snapshot();
+        unsafe
+        {
+            fixed (byte* p = pixels)
+            {
+                image.ReadPixels(info, (IntPtr)p, w * 4, 0, 0);
+            }
+        }
+
         if (harden)
             HardenGlyphWhite(pixels);
         return pixels;
@@ -187,6 +206,8 @@ internal sealed class GuiFontRasterizer : IDisposable
 
     public void Dispose()
     {
+        _font?.Dispose();
+        _typeface?.Dispose();
         _atlas?.Dispose();
         _measureCache.Clear();
         _glyphs.Clear();

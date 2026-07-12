@@ -139,7 +139,7 @@ spr.TryDecodeSpriteById(42, destinationSpan);
 
 ## Export decoded sprites (PNG / JPEG / BMP)
 
-Decoded pixels are **4096 bytes** per id (`R, G, B, A` per pixel — same as `SpritePixelCodec.UncompressToRgba`). Use **`NyxAssets.Utils.SpriteImageExporter`** (SixLabors.ImageSharp):
+Decoded pixels are **4096 bytes** per id (`R, G, B, A` per pixel — same as `SpritePixelCodec.UncompressToRgba`). Use **`NyxAssets.Utils.SpriteImageExporter`** (SkiaSharp):
 
 ```csharp
 byte[] pixels = assets.DecodeSpriteById(50);

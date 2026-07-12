@@ -1225,7 +1225,7 @@ Compiles sprites into ZSTD `.assets` format.
 
 ### `SpriteImageExporter` (static)
 
-Writes decoded 32×32 RGBA buffers to raster files (SixLabors.ImageSharp).
+Writes decoded 32×32 RGBA buffers to raster files (SkiaSharp).
 
 #### Constants
 

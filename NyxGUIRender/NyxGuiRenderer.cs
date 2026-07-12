@@ -5,7 +5,6 @@ using NyxGui;
 using NyxGuiRender.Gl;
 using NyxGuiRender.Text;
 using Silk.NET.OpenGL;
-using SixLabors.Fonts;
 
 namespace NyxGuiRender;
 

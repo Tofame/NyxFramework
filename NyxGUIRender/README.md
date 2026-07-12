@@ -5,7 +5,7 @@ OpenGL implementation of [NyxGUI](../NyxGUI/) `INyxGuiPainter`. **Not** part of 
 ## Responsibilities
 
 - Batched textured quads (one GPU flush per frame where possible)
-- TTF via SixLabors (CPU raster + GPU upload)
+- TTF via SkiaSharp (CPU raster + GPU upload)
 - CPU cache for repeated label strings
 - 9-slice panel chrome, scissor, solid fills
 

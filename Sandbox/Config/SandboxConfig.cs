@@ -28,7 +28,7 @@ public sealed class SandboxConfig
             return new SandboxConfig();
         }
 
-        var toml = Toml.ToModel(File.ReadAllText(path));
+        var toml = TomlSerializer.Deserialize<TomlTable>(File.ReadAllText(path)) ?? new TomlTable();
         var client = toml.TryGetValue("client", out var cObj) && cObj is TomlTable cTab ? ParseClient(cTab) : ClientConfig.Default;
         var map = toml.TryGetValue("map", out var mObj) && mObj is TomlTable mTab ? ParseMap(mTab) : MapConfig.Default;
         var player = toml.TryGetValue("player", out var pObj) && pObj is TomlTable pTab ? ParseCreatureSpawn(pTab, CreatureSpawnConfig.DefaultPlayer) : CreatureSpawnConfig.DefaultPlayer;

@@ -276,18 +276,17 @@ public interface ISpriteSource : IDisposable
 Suppose you have a single `atlas.png` (4096×4096) and a `manifest.json` mapping sprite ids to `(x, y)` coordinates:
 
 ```csharp
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 using NyxAssets.Sprites;
 
 public sealed class PngAtlasSpriteSource : ISpriteSource
 {
-    private readonly Image<Rgba32> _atlas;
+    private readonly SKBitmap _atlas;
     private readonly Dictionary<uint, (int X, int Y)> _locations;
 
     public PngAtlasSpriteSource(string atlasPath, string manifestPath)
     {
-        _atlas = Image.Load<Rgba32>(atlasPath);
+        _atlas = SKBitmap.Decode(atlasPath);
         var json = File.ReadAllText(manifestPath);
         _locations = JsonSerializer.Deserialize<Dictionary<uint, (int X, int Y)>>(json)!;
         SpriteCount = (uint)_locations.Count;
@@ -308,12 +307,12 @@ public sealed class PngAtlasSpriteSource : ISpriteSource
         {
             for (var x = 0; x < edge; x++)
             {
-                var pixel = _atlas[loc.X + x, loc.Y + y];
+                var pixel = _atlas.GetPixel(loc.X + x, loc.Y + y);
                 var o = (y * edge + x) * 4;
-                rgbaDestination[o] = pixel.R;
-                rgbaDestination[o + 1] = pixel.G;
-                rgbaDestination[o + 2] = pixel.B;
-                rgbaDestination[o + 3] = pixel.A;
+                rgbaDestination[o] = pixel.Red;
+                rgbaDestination[o + 1] = pixel.Green;
+                rgbaDestination[o + 2] = pixel.Blue;
+                rgbaDestination[o + 3] = pixel.Alpha;
             }
         }
         return true;

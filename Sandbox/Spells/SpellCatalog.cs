@@ -40,7 +40,7 @@ internal sealed class SpellCatalog
         if (!File.Exists(path))
             return new Dictionary<string, SpellAreaPattern>(StringComparer.OrdinalIgnoreCase);
 
-        var model = Toml.ToModel(File.ReadAllText(path));
+        var model = TomlSerializer.Deserialize<TomlTable>(File.ReadAllText(path)) ?? new TomlTable();
         var result = new Dictionary<string, SpellAreaPattern>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (key, value) in model)
@@ -83,7 +83,7 @@ internal sealed class SpellCatalog
         if (!File.Exists(path))
             throw new FileNotFoundException($"Spell definitions not found: \"{path}\".");
 
-        var model = Toml.ToModel(File.ReadAllText(path));
+        var model = TomlSerializer.Deserialize<TomlTable>(File.ReadAllText(path)) ?? new TomlTable();
         if (!model.TryGetValue("spell", out var spellObj))
             return [];
 

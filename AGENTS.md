@@ -21,9 +21,9 @@ Welcome to NyxFramework. This file defines the global solution layout, build rul
 Sandbox (Exe)
 ├── NyxDrawer      → NyxRender, NyxAssets
 ├── NyxGUI         (standalone, no OpenGL dep)
-├── NyxGUIRender   → NyxGUI, Silk.NET.OpenGL, SixLabors
+├── NyxGUIRender   → NyxGUI, Silk.NET.OpenGL, SkiaSharp
 ├── NyxRender      (Silk.NET OpenGL, StbImageSharp)
-├── NyxAssets      (SixLabors.ImageSharp)
+├── NyxAssets      (SkiaSharp)
 ├── NyxNetwork     (Sockets, packets & serialization)
 ├── NyxGameMap     (Nested - Map parsing & pathfinding)
 └── NyxGameCore    (Nested - Position math, Item, Tile)

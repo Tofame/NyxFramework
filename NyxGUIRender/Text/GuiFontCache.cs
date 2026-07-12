@@ -1,5 +1,4 @@
 using Silk.NET.OpenGL;
-using SixLabors.Fonts;
 
 namespace NyxGuiRender.Text;
 
