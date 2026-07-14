@@ -5,7 +5,7 @@ DatSpr
   frame-groups: false
   metadata-controller: default
   attribute-server: tfs1.4
-  metadata-file: Test_860.dat
-  sprites-file: Test_860.spr
+  metadata-file: Test_1098.dat
+  sprites-file: Test_1098.spr
   sprite-size: 32
   sprite-data-size: 4096

@@ -133,4 +133,59 @@ public class ObdFixtureTests
 		var recompressed = FlashLzmaCodec.Compress(origPayload);
 		ObdThingCodec.Read(recompressed, options);
 	}
+
+	[Fact]
+	public void ObdV1_Roundtrip_PreservesThingAndKind()
+	{
+		var options = new ClientDataReadOptions
+		{
+			ClientVersion = new ClientDataVersion(860),
+			TransparentSprites = true,
+		};
+
+		var item = new ThingType { Id = 5, Kind = ThingKind.Item };
+		item.FrameGroups.Add(new ThingFrameGroup
+		{
+			Frames = 1,
+			SpriteIds = [7],
+		});
+
+		var rgba = new byte[SpritePixelCodec.RgbaBufferLength];
+		rgba[0] = 128;
+		var document = new ThingDocument
+		{
+			Thing = item,
+			ClientVersion = 860,
+			SpritesRgba = new Dictionary<uint, byte[]> { [7] = rgba },
+		};
+
+		var obdBytes = ObdThingCodec.Write(document, options, ObdVersions.Version1);
+		var loaded = ObdThingCodec.Read(obdBytes, options);
+		Assert.Equal(ObdVersions.Version1, loaded.ObdVersion);
+		Assert.Equal(ThingKind.Item, loaded.Kind);
+		Assert.Equal(7u, loaded.Thing.FrameGroups[0].SpriteIds[0]);
+	}
+
+	[Fact]
+	public void Write_WithNullSpritesRgba_ThrowsInvalidOperationException()
+	{
+		var options = new ClientDataReadOptions
+		{
+			ClientVersion = new ClientDataVersion(1098),
+			TransparentSprites = true,
+		};
+
+		var item = new ThingType { Id = 1, Kind = ThingKind.Item };
+		item.FrameGroups.Add(new ThingFrameGroup { Frames = 1, SpriteIds = [99] });
+
+		var document = new ThingDocument
+		{
+			Thing = item,
+			ClientVersion = 1098,
+			SpritesRgba = null,
+		};
+
+		// OBD format requires embedded sprite pixels; null or empty SpritesRgba must throw
+		Assert.Throws<InvalidOperationException>(() => ObdThingCodec.Write(document, options, ObdVersions.Version3));
+	}
 }

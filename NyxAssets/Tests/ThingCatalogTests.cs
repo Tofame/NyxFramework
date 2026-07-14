@@ -251,4 +251,86 @@ public class ThingCatalogTests
 		Assert.Throws<KeyNotFoundException>(() => catalog.GetEffect(1));
 		Assert.Throws<KeyNotFoundException>(() => catalog.GetMissile(1));
 	}
+
+	[Fact]
+	public void PutItem_DuplicateId_ReplacesExistingEntry()
+	{
+		var catalog = new ThingCatalog();
+		var item = new ThingType { Id = 100, Kind = ThingKind.Item, IsGround = true, GroundSpeed = 120 };
+		item.FrameGroups.Add(new ThingFrameGroup
+		{
+			Width = 1, Height = 1, ExactSize = 32, Layers = 1,
+			PatternX = 1, PatternY = 1, PatternZ = 1,
+			Frames = 1, SpriteIds = new uint[] { 1 }
+		});
+		catalog.PutItem(item);
+
+		// Replace with a different entry having the same Id
+		var replaced = new ThingType { Id = 100, Kind = ThingKind.Item, IsGround = false, Pickupable = true };
+		replaced.FrameGroups.Add(new ThingFrameGroup
+		{
+			Width = 1, Height = 1, ExactSize = 32, Layers = 1,
+			PatternX = 1, PatternY = 1, PatternZ = 1,
+			Frames = 1, SpriteIds = new uint[] { 2 }
+		});
+		catalog.PutItem(replaced);
+
+		Assert.Equal(100u, catalog.ItemCount);
+		var retrieved = catalog.GetItem(100);
+		Assert.False(retrieved.IsGround);
+		Assert.True(retrieved.Pickupable);
+		Assert.Equal(2u, retrieved.FrameGroups[0].SpriteIds[0]);
+	}
+
+	[Fact]
+	public void WriteDatTo_WithOutfitEffectMissile_RoundtripsAllKinds()
+	{
+		var clientVer = new ClientDataVersion(1098);
+		var options = new ClientDataReadOptions
+		{
+			ClientVersion = clientVer,
+			TransparentSprites = true,
+			ImprovedAnimations = true,
+			OutfitFrameGroups = true,
+		};
+		var format = DatThingFormatRules.SelectFromClientVersion(clientVer);
+		var catalog = new ThingCatalog(99999, 99, 0, 0, 0, format);
+
+		var frameGroup = new ThingFrameGroup
+		{
+			Width = 1, Height = 1, ExactSize = 32, Layers = 1,
+			PatternX = 1, PatternY = 1, PatternZ = 1,
+			Frames = 1, SpriteIds = new uint[] { 10 }
+		};
+
+		var outfit = new ThingType { Id = 1, Kind = ThingKind.Outfit };
+		outfit.FrameGroups.Add(frameGroup);
+		catalog.PutOutfit(outfit);
+
+		var effect = new ThingType { Id = 1, Kind = ThingKind.Effect };
+		effect.FrameGroups.Add(frameGroup);
+		catalog.PutEffect(effect);
+
+		var missile = new ThingType { Id = 1, Kind = ThingKind.Missile };
+		missile.FrameGroups.Add(frameGroup);
+		catalog.PutMissile(missile);
+
+		using var ms = new MemoryStream();
+		catalog.WriteDatTo(ms, options);
+		var readBack = ThingCatalog.Load(ms.ToArray(), options);
+
+		Assert.Equal(1u, readBack.OutfitCount);
+		Assert.Equal(1u, readBack.EffectCount);
+		Assert.Equal(1u, readBack.MissileCount);
+
+		var readOutfit = readBack.GetOutfit(1);
+		Assert.Equal(ThingKind.Outfit, readOutfit.Kind);
+		Assert.Single(readOutfit.FrameGroups);
+
+		var readEffect = readBack.GetEffect(1);
+		Assert.Equal(ThingKind.Effect, readEffect.Kind);
+
+		var readMissile = readBack.GetMissile(1);
+		Assert.Equal(ThingKind.Missile, readMissile.Kind);
+	}
 }
