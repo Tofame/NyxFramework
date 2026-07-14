@@ -65,6 +65,111 @@ public class ThingFrameResolverTests
         Assert.Equal(1u, selection.PatternY);
     }
 
+    [Fact]
+    public void GetEffectFrameIndex_ClampsBetweenZeroAndFramesMinus1()
+    {
+        var effect = CreateEffectWithFrames(4);
+
+        // At 0 ms → frame 0
+        Assert.Equal(0u, ThingFrameResolver.GetEffectFrameIndex(effect, 0f));
+
+        // Clamped at Frames - 1 (3) for very large elapsed time
+        Assert.Equal(3u, ThingFrameResolver.GetEffectFrameIndex(effect, 99999f));
+
+        // Advances with each 75 ms tick
+        Assert.Equal(1u, ThingFrameResolver.GetEffectFrameIndex(effect, 75f));
+        Assert.Equal(2u, ThingFrameResolver.GetEffectFrameIndex(effect, 150f));
+    }
+
+    [Fact]
+    public void GetCyclicFrameIndex_WrapsAround()
+    {
+        var thing = CreateEffectWithFrames(3);
+
+        var frameAt0 = ThingFrameResolver.GetCyclicFrameIndex(thing, 0f);
+        var frameAt333 = ThingFrameResolver.GetCyclicFrameIndex(thing, 333f);
+        var frameAt999 = ThingFrameResolver.GetCyclicFrameIndex(thing, 999f);
+
+        Assert.Equal(0u, frameAt0);
+        Assert.Equal(1u, frameAt333);
+        // After 3 full cycles returns to frame 0
+        Assert.Equal(0u, frameAt999);
+    }
+
+    [Theory]
+    [InlineData(-1, 4u, 3u)]  // -1 mod 4 → 3
+    [InlineData(-4, 4u, 0u)]  // -4 mod 4 → 0
+    public void NormalizeDirection_NegativeInput_ReturnsPositiveMod(int direction, uint patternCount, uint expected)
+    {
+        Assert.Equal(expected, ThingFrameResolver.NormalizeDirection(direction, patternCount));
+    }
+
+    [Theory]
+    [InlineData(-1, 3u, 2u)]  // -1 mod 3 → 2
+    [InlineData(-3, 3u, 0u)]  // -3 mod 3 → 0
+    public void PositiveMod_NegativeInput_ReturnsPositiveMod(int value, uint count, uint expected)
+    {
+        Assert.Equal(expected, ThingFrameResolver.PositiveMod(value, count));
+    }
+
+    [Fact]
+    public void GetMissileFrame_FromTileDelta_ResolvesCorrectDirection()
+    {
+        var missile = CreateMissile();
+
+        // dx=1, dy=0 → East direction → pattern (2, 1)
+        var selection = ThingFrameResolver.GetMissileFrame(missile, new MissileFrameRequest { TileDeltaX = 1, TileDeltaY = 0 });
+        Assert.Equal(2u, selection.PatternX);
+        Assert.Equal(1u, selection.PatternY);
+
+        // dx=0, dy=-1 → North direction → pattern (1, 0)
+        var northSelection = ThingFrameResolver.GetMissileFrame(missile, new MissileFrameRequest { TileDeltaX = 0, TileDeltaY = -1 });
+        Assert.Equal(1u, northSelection.PatternX);
+        Assert.Equal(0u, northSelection.PatternY);
+    }
+
+    [Fact]
+    public void EnumerateMountedOutfitFrames_EmitsMountBeforeRider()
+    {
+        var outfit = CreateOutfitWithWalkGroup();
+        var mount = CreateOutfitWithWalkGroup();
+
+        var frames = ThingFrameResolver.EnumerateMountedOutfitFrames(outfit, mount).ToArray();
+
+        Assert.True(frames.Length >= 2);
+        // Mount emitted first
+        Assert.True(frames[0].IsMount);
+        // At least one rider frame follows
+        Assert.Contains(frames, f => !f.IsMount);
+    }
+
+    [Fact]
+    public void GetOutfitFrame_WrongKind_ThrowsArgumentException()
+    {
+        var item = new ThingType { Id = 1, Kind = ThingKind.Item };
+        item.FrameGroups.Add(new ThingFrameGroup { SpriteIds = new uint[] { 1 } });
+
+        Assert.Throws<ArgumentException>(() => ThingFrameResolver.GetOutfitFrame(item));
+    }
+
+    [Theory]
+    [InlineData(1, 0, 150f)]   // 1 tile → 150 ms
+    [InlineData(0, 2, 300f)]   // 2 tiles → 300 ms
+    public void DurationMsFromTileDelta_MatchesExpected(int dx, int dy, float expected)
+    {
+        Assert.Equal(expected, MissileDirectionPatterns.DurationMsFromTileDelta(dx, dy), precision: 1);
+    }
+
+    [Theory]
+    [InlineData(4u, 2u, true, true)]    // 4×2, stackable → uses grid
+    [InlineData(4u, 2u, false, false)]  // 4×2, not stackable → no grid
+    [InlineData(3u, 2u, true, false)]   // wrong patternX → no grid
+    [InlineData(4u, 1u, true, false)]   // wrong patternY → no grid
+    public void ItemStackPatterns_UsesStackCountGrid_Boundaries(uint patternX, uint patternY, bool stackable, bool expected)
+    {
+        Assert.Equal(expected, ItemStackPatterns.UsesStackCountGrid(patternX, patternY, stackable));
+    }
+
     private static ThingType CreateMissile()
     {
         var thing = new ThingType { Id = 1, Kind = ThingKind.Missile };
@@ -117,6 +222,19 @@ public class ThingFrameResolverTests
             PatternX = 3,
             PatternY = 2,
             SpriteIds = new uint[] { 10 },
+        });
+        return thing;
+    }
+
+    private static ThingType CreateEffectWithFrames(uint frames)
+    {
+        var thing = new ThingType { Id = 1, Kind = ThingKind.Effect };
+        thing.FrameGroups.Add(new ThingFrameGroup
+        {
+            PatternX = 1,
+            PatternY = 1,
+            Frames = frames,
+            SpriteIds = Enumerable.Range(1, (int)frames).Select(i => (uint)i).ToArray(),
         });
         return thing;
     }

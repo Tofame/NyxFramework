@@ -36,6 +36,7 @@ public static class SpriteSheetCompiler
             var addressBytes = countToWrite * 4u;
             var dataOffset = headSize + addressBytes;
 
+            bw.Flush();
             ms.Seek(addressTableStart, SeekOrigin.Begin);
             bw.Write(new byte[countToWrite * 4]);
 
@@ -52,12 +53,13 @@ public static class SpriteSheetCompiler
                 compressedSprites[id] = SpritePixelCodec.CompressRgba(rgba, transparentPixels);
             });
 
-            var currentOffset = dataOffset;
+            var currentOffset = (uint)dataOffset;
 
             for (var id = 1u; id <= countToWrite; id++)
             {
                 var compressed = compressedSprites[(int)id];
                 var addrSlot = addressTableStart + (int)((id - 1) * 4);
+                bw.Flush();
                 ms.Seek(addrSlot, SeekOrigin.Begin);
 
                 if (compressed is null)
@@ -67,6 +69,7 @@ public static class SpriteSheetCompiler
                 }
 
                 bw.Write(currentOffset);
+                bw.Flush();
                 ms.Seek((int)currentOffset, SeekOrigin.Begin);
                 bw.Write((byte)0xFF);
                 bw.Write((byte)0x00);
@@ -75,6 +78,7 @@ public static class SpriteSheetCompiler
                 if (compressed.Length > 0)
                     bw.Write(compressed);
 
+                bw.Flush();
                 currentOffset = (uint)ms.Length;
             }
         }

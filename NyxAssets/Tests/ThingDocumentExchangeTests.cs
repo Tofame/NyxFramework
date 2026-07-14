@@ -215,4 +215,53 @@ public class ThingDocumentExchangeTests
 		Assert.Equal(0u, fromJson.Thing.Id);
 		Assert.Equal(7, fromJson.SpritesRgba![501][(16 * 32 + 16) * 4]);
 	}
+
+	[Fact]
+	public void JsonDocument_WithNullSpritesRgba_OmitsAndRestoresAsNull()
+	{
+		var document = new ThingDocument
+		{
+			Thing = CreateSampleEffect(),
+			ClientVersion = 1098,
+			SpritesRgba = null,
+		};
+
+		using var ms = new MemoryStream();
+		ThingDocumentJsonCodec.Write(document, ms);
+
+		var loaded = ThingDocumentJsonCodec.Read(ms.ToArray().AsMemory());
+		Assert.Null(loaded.SpritesRgba);
+		Assert.Equal(ThingKind.Effect, loaded.Kind);
+	}
+
+	[Theory]
+	[InlineData(ThingKind.Item, "item")]
+	[InlineData(ThingKind.Outfit, "outfit")]
+	[InlineData(ThingKind.Effect, "effect")]
+	[InlineData(ThingKind.Missile, "missile")]
+	public void ThingKindNames_ToName_ReturnsCorrectStringForAllKinds(ThingKind kind, string expected)
+	{
+		Assert.Equal(expected, ThingKindNames.ToName(kind));
+	}
+
+	[Fact]
+	public void ImportInto_Item_PutsItemInCatalog()
+	{
+		var catalog = new ThingCatalog();
+		var item = new ThingType
+		{
+			Id = 100,
+			Kind = ThingKind.Item,
+			IsGround = true,
+			GroundSpeed = 150,
+		};
+		item.FrameGroups.Add(new ThingFrameGroup { SpriteIds = [10] });
+
+		var document = ThingDocument.FromThing(item);
+		document.ImportInto(catalog);
+
+		var loaded = catalog.GetItem(100);
+		Assert.True(loaded.IsGround);
+		Assert.Equal(150u, loaded.GroundSpeed);
+	}
 }

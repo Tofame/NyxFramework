@@ -2,6 +2,7 @@ using Xunit;
 using System;
 using System.IO;
 using NyxAssets.Sprites;
+using System.Linq;
 
 namespace NyxAssets.Tests;
 
@@ -186,5 +187,83 @@ public class SpriteArchiveTests
 		var badSigBytes = new byte[20];
 		badSigBytes[0] = 0x00; // Expected AssetArchive.MagicSignature (0x54535341)
 		Assert.Throws<InvalidDataException>(() => AssetArchive.Load(badSigBytes, preloadPages: false));
+	}
+}
+
+public class SpritePixelCodecTests
+{
+	[Theory]
+	[InlineData(true)]
+	[InlineData(false)]
+	public void CompressRgba_UncompressToRgba_Roundtrip(bool transparent)
+	{
+		var original = new byte[SpritePixelCodec.RgbaBufferLength];
+		// Fill with known pattern
+		for (var i = 0; i < original.Length; i += 4)
+		{
+			original[i] = 200;
+			original[i + 1] = 100;
+			original[i + 2] = 50;
+			original[i + 3] = transparent ? (byte)128 : (byte)255;
+		}
+
+		var compressed = SpritePixelCodec.CompressRgba(original, transparent);
+		var dest = new byte[SpritePixelCodec.RgbaBufferLength];
+		SpritePixelCodec.UncompressToRgba(compressed, transparent, dest);
+
+		for (var i = 0; i < original.Length; i += 4)
+		{
+			Assert.Equal(original[i], dest[i]);
+			Assert.Equal(original[i + 1], dest[i + 1]);
+			Assert.Equal(original[i + 2], dest[i + 2]);
+			if (transparent)
+				Assert.Equal(original[i + 3], dest[i + 3]);
+			else
+				Assert.Equal(255, dest[i + 3]);
+		}
+	}
+
+	[Fact]
+	public void CompressRgba_AllTransparentSprite_ProducesEmptyPayload()
+	{
+		// All-zero RGBA means no colored pixels, so CompressRgba should produce no bytes
+		var zeroed = new byte[SpritePixelCodec.RgbaBufferLength];
+		var compressed = SpritePixelCodec.CompressRgba(zeroed, transparent: true);
+		Assert.Empty(compressed);
+	}
+
+	[Fact]
+	public void CompressRgba_SmallBuffer_ThrowsArgumentException()
+	{
+		var small = new byte[SpritePixelCodec.RgbaBufferLength - 1];
+		Assert.Throws<ArgumentException>(() => SpritePixelCodec.CompressRgba(small, transparent: true));
+	}
+
+	[Fact]
+	public void UncompressToRgba_SmallDestination_ThrowsArgumentException()
+	{
+		var compressed = Array.Empty<byte>();
+		var smallDest = new byte[SpritePixelCodec.RgbaBufferLength - 1];
+		Assert.Throws<ArgumentException>(() => SpritePixelCodec.UncompressToRgba(compressed, transparent: true, smallDest));
+	}
+
+	[Fact]
+	public void IsRgbaPixelZero_WithZeroPixel_ReturnsTrue()
+	{
+		var rgba = new byte[SpritePixelCodec.RgbaBufferLength];
+		// All bytes are zero by default
+		Assert.True(SpritePixelCodec.IsRgbaPixelZero(rgba, 0));
+		Assert.True(SpritePixelCodec.IsRgbaPixelZero(rgba, 500));
+	}
+
+	[Fact]
+	public void IsRgbaPixelZero_WithNonZeroPixel_ReturnsFalse()
+	{
+		var rgba = new byte[SpritePixelCodec.RgbaBufferLength];
+		var pixelIndex = 10;
+		rgba[pixelIndex * 4 + 2] = 1; // blue channel non-zero
+		Assert.False(SpritePixelCodec.IsRgbaPixelZero(rgba, pixelIndex));
+		// Adjacent pixel must still be zero
+		Assert.True(SpritePixelCodec.IsRgbaPixelZero(rgba, pixelIndex + 1));
 	}
 }
