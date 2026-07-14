@@ -222,4 +222,120 @@ public class KnownContentTests
 		var expectedSprites = Enumerable.Range(30, 8).Select(id => (uint)id).ToArray();
 		Assert.Equal(expectedSprites, nonZeroSprites);
 	}
+
+	// ── Binary Compilation Round-trips ───────────────────────────────────────
+
+	[Theory]
+	[InlineData("860")]
+	[InlineData("1098")]
+	public void DatFile_Compilation_Roundtrip(string version)
+	{
+		// 1. Load original fixture catalog
+		var (originalCatalog, _) = LoadCatalog(version);
+		var otfiPath = GetFixturePath("ClientAssets", version, $"Test_{version}.otfi");
+		var otfi = OtfiFile.Load(otfiPath);
+		var options = otfi.ToReadOptions();
+
+		// 2. Compile to bytes
+		using var ms = new MemoryStream();
+		originalCatalog.WriteDatTo(ms, options);
+		var compiledBytes = ms.ToArray();
+
+		// 3. Reload compiled bytes
+		var reloadedCatalog = ThingCatalog.Load(compiledBytes, options);
+
+		// 4. Verify identity integrity
+		Assert.Equal(originalCatalog.DatSignature, reloadedCatalog.DatSignature);
+		Assert.Equal(originalCatalog.ItemCount, reloadedCatalog.ItemCount);
+		Assert.Equal(originalCatalog.OutfitCount, reloadedCatalog.OutfitCount);
+		Assert.Equal(originalCatalog.EffectCount, reloadedCatalog.EffectCount);
+		Assert.Equal(originalCatalog.MissileCount, reloadedCatalog.MissileCount);
+
+		// Verify specific content survives compilation
+		var origItem = originalCatalog.GetItem(102);
+		var reloadItem = reloadedCatalog.GetItem(102);
+		Assert.Equal(origItem.IsUnpassable, reloadItem.IsUnpassable);
+		Assert.Equal(origItem.IsUnmoveable, reloadItem.IsUnmoveable);
+		Assert.Equal(origItem.MiniMapColor, reloadItem.MiniMapColor);
+	}
+
+	[Theory]
+	[InlineData("860")]
+	[InlineData("1098")]
+	public void SprFile_Compilation_Roundtrip(string version)
+	{
+		// 1. Load original fixture spr with proper OTFI options
+		var otfiPath = GetFixturePath("ClientAssets", version, $"Test_{version}.otfi");
+		var otfi = OtfiFile.Load(otfiPath);
+		var options = otfi.ToReadOptions();
+
+		var sprPath = GetFixturePath("ClientAssets", version, $"Test_{version}.spr");
+		var originalBytes = File.ReadAllBytes(sprPath);
+		using var originalArchive = SpriteArchive.Load(
+			originalBytes,
+			options.ResolveExtendedSpriteIds(),
+			options.TransparentSprites);
+
+		// 2. Extract all sprites
+		var count = originalArchive.SpriteCount;
+		var spriteList = new byte[]?[count + 1]; // index 0 is unused (null)
+		for (uint i = 1; i <= count; i++)
+		{
+			if (originalArchive.IsEmptySprite(i))
+			{
+				spriteList[i] = null;
+			}
+			else
+			{
+				var buffer = new byte[SpritePixelCodec.RgbaBufferLength];
+				Assert.True(originalArchive.TryDecodeSpriteById(i, buffer));
+				spriteList[i] = buffer;
+			}
+		}
+
+		// 3. Compile sprites back into new .spr file bytes
+		using var ms = new MemoryStream();
+		SpriteSheetCompiler.WriteToStream(
+			ms,
+			originalArchive.Signature,
+			originalArchive.UsesExtendedSpriteIds,
+			originalArchive.TransparentPixels,
+			spriteList);
+		var compiledBytes = ms.ToArray();
+
+		// 4. Reload compiled bytes
+		using var reloadedArchive = SpriteArchive.Load(
+			compiledBytes,
+			originalArchive.UsesExtendedSpriteIds,
+			originalArchive.TransparentPixels);
+
+		// 5. Assert equality
+		Assert.Equal(originalArchive.Signature, reloadedArchive.Signature);
+		Assert.Equal(originalArchive.SpriteCount, reloadedArchive.SpriteCount);
+
+		var origDest = new byte[SpritePixelCodec.RgbaBufferLength];
+		var reloadDest = new byte[SpritePixelCodec.RgbaBufferLength];
+		for (uint i = 1; i <= count; i++)
+		{
+			var origEmpty = originalArchive.IsEmptySprite(i);
+			var reloadEmpty = reloadedArchive.IsEmptySprite(i);
+			Assert.Equal(origEmpty, reloadEmpty);
+
+			if (!origEmpty)
+			{
+				System.Array.Clear(origDest);
+				System.Array.Clear(reloadDest);
+
+				Assert.True(originalArchive.TryDecodeSpriteById(i, origDest));
+				Assert.True(reloadedArchive.TryDecodeSpriteById(i, reloadDest));
+				for (int p = 0; p < origDest.Length; p++)
+				{
+					if (origDest[p] != reloadDest[p])
+					{
+						Assert.Fail($"Mismatch at sprite {i}, byte index {p}. Expected {origDest[p]}, got {reloadDest[p]}.");
+					}
+				}
+			}
+		}
+	}
 }
