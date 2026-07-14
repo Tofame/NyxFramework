@@ -166,4 +166,60 @@ public class KnownContentTests
 		Assert.Equal(1u, outfit2.FrameGroups[0].Frames);  // idle: 1 frame
 		Assert.Equal(2u, outfit2.FrameGroups[1].Frames);  // walk: 2 frames
 	}
+
+	// ── DAT effects and missiles assertions ──────────────────────────────────
+
+	[Theory]
+	[InlineData("860")]
+	[InlineData("1098")]
+	public void Effects_VerifySecondEffect_SpriteIdsAndTimings(string version)
+	{
+		var (catalog, _) = LoadCatalog(version);
+
+		Assert.Equal(2u, catalog.EffectCount);
+
+		var effect2 = catalog.GetEffect(2);
+		Assert.Single(effect2.FrameGroups);
+
+		var fg = effect2.FrameGroups[0];
+		Assert.Equal(4u, fg.Frames);
+		Assert.Equal(new uint[] { 26, 27, 28, 29 }, fg.SpriteIds);
+
+		if (version == "1098" && fg.FrameTimings != null && fg.FrameTimings.Length >= 4)
+		{
+			// 2nd animation frame timing (index 1)
+			Assert.Equal(200u, fg.FrameTimings[1].MinimumMilliseconds);
+			Assert.Equal(200u, fg.FrameTimings[1].MaximumMilliseconds);
+
+			// 3rd animation frame timing (index 2)
+			Assert.Equal(300u, fg.FrameTimings[2].MinimumMilliseconds);
+			Assert.Equal(300u, fg.FrameTimings[2].MaximumMilliseconds);
+
+			// 4th animation frame timing (index 3)
+			Assert.Equal(300u, fg.FrameTimings[3].MinimumMilliseconds);
+			Assert.Equal(300u, fg.FrameTimings[3].MaximumMilliseconds);
+		}
+	}
+
+	[Theory]
+	[InlineData("860")]
+	[InlineData("1098")]
+	public void Missiles_VerifyFirstMissile_PropertiesAndSprites(string version)
+	{
+		var (catalog, _) = LoadCatalog(version);
+
+		Assert.Equal(1u, catalog.MissileCount);
+
+		var missile1 = catalog.GetMissile(1);
+		Assert.Single(missile1.FrameGroups);
+
+		var fg = missile1.FrameGroups[0];
+		Assert.Equal(3u, fg.PatternX);
+		Assert.Equal(3u, fg.PatternY);
+
+		// Missile uses sprite IDs 30-37. Filter out 0 (empty slots).
+		var nonZeroSprites = fg.SpriteIds.Where(id => id != 0).OrderBy(id => id).ToArray();
+		var expectedSprites = Enumerable.Range(30, 8).Select(id => (uint)id).ToArray();
+		Assert.Equal(expectedSprites, nonZeroSprites);
+	}
 }
