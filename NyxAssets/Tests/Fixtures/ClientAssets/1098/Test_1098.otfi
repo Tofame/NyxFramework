@@ -1,0 +1,9 @@
+DatSpr
+  extended: true
+  transparency: true
+  frame-durations: true
+  frame-groups: true
+  metadata-file: Test_1098.dat
+  sprites-file: Test_1098.spr
+  sprite-size: 32
+  sprite-data-size: 4096

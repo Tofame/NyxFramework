@@ -1,0 +1,11 @@
+DatSpr
+  extended: true
+  transparency: true
+  frame-durations: false
+  frame-groups: false
+  metadata-controller: default
+  attribute-server: tfs1.4
+  metadata-file: Test_860.dat
+  sprites-file: Test_860.spr
+  sprite-size: 32
+  sprite-data-size: 4096
