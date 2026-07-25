@@ -24,9 +24,9 @@ public sealed class DatThingCatalogWriter : IThingCatalogWriter
             {
                 var thing = catalog.GetExisting(kind, id);
                 if (itemPath)
-                    DatThingPropertySerializer.WriteItem(w, thing, catalog.DatFormat);
+                    DatThingPropertySerializer.WriteItem(w, thing, catalog.DatFormat, formatOptions);
                 else
-                    DatThingPropertySerializer.WriteNonItem(w, thing, catalog.DatFormat);
+                    DatThingPropertySerializer.WriteNonItem(w, thing, catalog.DatFormat, formatOptions);
 
                 if (catalog.DatFormat <= DatThingFormat.V2_7_40__7_50)
                     ThingTextureEncoder.Write(w, thing, extended, improved, outfitGroups, includePatternZ: false);

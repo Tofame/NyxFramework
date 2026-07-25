@@ -333,4 +333,58 @@ public class ThingCatalogTests
 		var readMissile = readBack.GetMissile(1);
 		Assert.Equal(ThingKind.Missile, readMissile.Kind);
 	}
+
+	[Fact]
+	public void TestCustomFlagOverridesRoundtrip()
+	{
+		var format = DatThingFormat.V5_8_60__9_86;
+		var clientVer = 960u;
+		var customMap = new Dictionary<string, byte>(StringComparer.Ordinal)
+		{
+			["Wrappable"] = 0x24,
+			["Unwrappable"] = 0x25,
+			["IsContainer"] = 0x04
+		};
+
+		var options = new ClientDataReadOptions
+		{
+			ClientVersion = new ClientDataVersion(clientVer),
+			TransparentSprites = true,
+			CustomFlagMap = customMap
+		};
+
+		var catalog = new ThingCatalog(111111, 99, 0, 0, 0, format);
+		var item = new ThingType { Id = 100, Kind = ThingKind.Item };
+		item.Wrappable = true;
+		item.Unwrappable = true;
+		item.IsContainer = true;
+
+		item.FrameGroups.Add(new ThingFrameGroup
+		{
+			GroupTypeId = 0,
+			Width = 1,
+			Height = 1,
+			ExactSize = 32,
+			Layers = 1,
+			PatternX = 1,
+			PatternY = 1,
+			PatternZ = 1,
+			Frames = 1,
+			SpriteIds = new uint[] { 10 }
+		});
+
+		catalog.PutItem(item);
+
+		using var ms = new MemoryStream();
+		catalog.WriteDatTo(ms, options);
+		var bytes = ms.ToArray();
+
+		// Read back
+		var readCatalog = ThingCatalog.Load(bytes, options);
+		var readItem = readCatalog.GetItem(100);
+
+		Assert.True(readItem.Wrappable);
+		Assert.True(readItem.Unwrappable);
+		Assert.True(readItem.IsContainer);
+	}
 }

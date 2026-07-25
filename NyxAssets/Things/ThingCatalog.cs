@@ -350,7 +350,7 @@ public sealed class ThingCatalog
         for (var id = minId; id <= maxId; id++)
         {
             var thing = new ThingType { Id = id, Kind = kind };
-            ThingPropertyDecoder.Read(ref reader, thing, format);
+            ThingPropertyDecoder.Read(ref reader, thing, format, options);
             var defaultMs = options.ResolveDefaultFrameDurationMs(kind);
             if (format <= DatThingFormat.V2_7_40__7_50)
                 ThingTextureDecoder.Read(ref reader, thing, extendedIds, improvedAnimations, outfitFrameGroups, defaultMs, includePatternZ: false);

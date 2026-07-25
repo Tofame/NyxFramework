@@ -24,6 +24,25 @@ public sealed class ClientDataReadOptions
     /// <summary>When null, <see cref="DatThingFormatRules.SelectFromClientVersion"/> is used.</summary>
     public DatThingFormat? DatThingFormatOverride { get; init; }
 
+    /// <summary>Optional custom flag mapping (C# Property Name -> Byte ID).</summary>
+    public IReadOnlyDictionary<string, byte>? CustomFlagMap { get; init; }
+
+    private IReadOnlyDictionary<byte, string>? _customFlagReadMap;
+    public IReadOnlyDictionary<byte, string>? ResolveCustomFlagReadMap()
+    {
+        if (CustomFlagMap == null) return null;
+        if (_customFlagReadMap == null)
+        {
+            var dict = new Dictionary<byte, string>();
+            foreach (var pair in CustomFlagMap)
+            {
+                dict[pair.Value] = pair.Key;
+            }
+            _customFlagReadMap = dict;
+        }
+        return _customFlagReadMap;
+    }
+
     public bool ResolveExtendedSpriteIds() =>
         ExtendedSpriteIds ?? DatThingFormatRules.UsesExtendedSpriteIdsByDefault(ClientVersion);
 

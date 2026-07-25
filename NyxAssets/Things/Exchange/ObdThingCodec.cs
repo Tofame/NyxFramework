@@ -97,7 +97,7 @@ public static class ObdThingCodec
         var thing = new ThingType { Id = 0, Kind = kind };
 
         var format = readOptions.ResolveDatThingFormat();
-        ThingPropertyDecoder.Read(ref reader, thing, format);
+        ThingPropertyDecoder.Read(ref reader, thing, format, readOptions);
 
         var sprites = new Dictionary<uint, byte[]>();
         ObdTextureCodec.ReadV1(

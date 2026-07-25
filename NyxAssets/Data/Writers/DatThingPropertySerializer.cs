@@ -11,10 +11,16 @@ internal static class DatThingPropertySerializer
 {
     private const byte Last = 0xFF;
 
-    public static void WriteItem(LittleEndianStreamWriter w, ThingType t, DatThingFormat format)
+    public static void WriteItem(LittleEndianStreamWriter w, ThingType t, DatThingFormat format, ClientDataReadOptions? options = null)
     {
         if (t.Kind != ThingKind.Item)
             throw new ArgumentException("Expected item.", nameof(t));
+
+        if (options?.CustomFlagMap != null && options.CustomFlagMap.Count > 0)
+        {
+            WriteItemCustom(w, t, format, options);
+            return;
+        }
 
         switch (format)
         {
@@ -41,7 +47,7 @@ internal static class DatThingPropertySerializer
         }
     }
 
-    public static void WriteNonItem(LittleEndianStreamWriter w, ThingType t, DatThingFormat format)
+    public static void WriteNonItem(LittleEndianStreamWriter w, ThingType t, DatThingFormat format, ClientDataReadOptions? options = null)
     {
         if (t.Kind == ThingKind.Item)
             throw new ArgumentException("Use WriteItem for items.", nameof(t));
@@ -841,5 +847,160 @@ internal static class DatThingPropertySerializer
             w.WriteU8(0xFE);
 
         w.WriteU8(Last);
+    }
+
+    private static void WriteItemCustom(LittleEndianStreamWriter w, ThingType t, DatThingFormat format, ClientDataReadOptions options)
+    {
+        var active = GetActiveProperties(w, t, format, options);
+        active.Sort((a, b) => a.Id.CompareTo(b.Id));
+        foreach (var prop in active)
+        {
+            w.WriteU8(prop.Id);
+            prop.WriteValue();
+        }
+        w.WriteU8(Last);
+    }
+
+    private static List<(byte Id, Action WriteValue)> GetActiveProperties(LittleEndianStreamWriter w, ThingType t, DatThingFormat format, ClientDataReadOptions options)
+    {
+        var list = new List<(byte Id, Action WriteValue)>();
+        var customMap = options.CustomFlagMap;
+        if (customMap == null) return list;
+
+        // 1. Add simple custom flags
+        foreach (var pair in customMap)
+        {
+            var propertyName = pair.Key;
+            var flagId = pair.Value;
+            if (IsSimpleBooleanPropertyTrue(t, propertyName))
+            {
+                list.Add((flagId, () => { }));
+            }
+        }
+
+        // 2. Add specials (which have extra data) based on version defaults
+        if (format == DatThingFormat.V1_7_10__7_30)
+        {
+            if (t.IsGround) list.Add((0x00, () => w.WriteU16((ushort)t.GroundSpeed)));
+            if (t.Writable) list.Add((0x07, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.WritableOnce) list.Add((0x08, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.HasLight) list.Add((0x10, () => { w.WriteU16((ushort)t.LightLevel); w.WriteU16((ushort)t.LightColor); }));
+            if (t.HasElevation) list.Add((0x13, () => w.WriteU16((ushort)t.Elevation)));
+            if (t.MiniMap) list.Add((0x16, () => w.WriteU16((ushort)t.MiniMapColor)));
+            if (t.IsLensHelp) list.Add((0x1A, () => w.WriteU16((ushort)t.LensHelp)));
+        }
+        else if (format == DatThingFormat.V2_7_40__7_50)
+        {
+            if (t.IsGround) list.Add((0x00, () => w.WriteU16((ushort)t.GroundSpeed)));
+            if (t.Writable) list.Add((0x07, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.WritableOnce) list.Add((0x08, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.HasLight) list.Add((0x10, () => { w.WriteU16((ushort)t.LightLevel); w.WriteU16((ushort)t.LightColor); }));
+            if (t.HasElevation) list.Add((0x13, () => w.WriteU16((ushort)t.Elevation)));
+            if (t.MiniMap) list.Add((0x16, () => w.WriteU16((ushort)t.MiniMapColor)));
+            if (t.IsLensHelp) list.Add((0x1D, () => w.WriteU16((ushort)t.LensHelp)));
+        }
+        else if (format == DatThingFormat.V3_7_55__7_72)
+        {
+            if (t.IsGround) list.Add((0x00, () => w.WriteU16((ushort)t.GroundSpeed)));
+            if (t.Writable) list.Add((0x08, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.WritableOnce) list.Add((0x09, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.HasLight) list.Add((0x15, () => { w.WriteU16((ushort)t.LightLevel); w.WriteU16((ushort)t.LightColor); }));
+            if (t.HasOffset) list.Add((0x18, () => { w.WriteI16((short)t.OffsetX); w.WriteI16((short)t.OffsetY); }));
+            if (t.HasElevation) list.Add((0x19, () => w.WriteU16((ushort)t.Elevation)));
+            if (t.MiniMap) list.Add((0x1C, () => w.WriteU16((ushort)t.MiniMapColor)));
+            if (t.IsLensHelp) list.Add((0x1D, () => w.WriteU16((ushort)t.LensHelp)));
+        }
+        else if (format == DatThingFormat.V4_7_80__8_54)
+        {
+            if (t.IsGround) list.Add((0x00, () => w.WriteU16((ushort)t.GroundSpeed)));
+            if (t.Writable) list.Add((0x09, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.WritableOnce) list.Add((0x0A, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.HasLight) list.Add((0x16, () => { w.WriteU16((ushort)t.LightLevel); w.WriteU16((ushort)t.LightColor); }));
+            if (t.HasOffset) list.Add((0x19, () => { w.WriteI16((short)t.OffsetX); w.WriteI16((short)t.OffsetY); }));
+            if (t.HasElevation) list.Add((0x1A, () => w.WriteU16((ushort)t.Elevation)));
+            if (t.MiniMap) list.Add((0x1D, () => w.WriteU16((ushort)t.MiniMapColor)));
+            if (t.IsLensHelp) list.Add((0x1E, () => w.WriteU16((ushort)t.LensHelp)));
+        }
+        else if (format == DatThingFormat.V5_8_60__9_86)
+        {
+            if (t.IsGround) list.Add((0x00, () => w.WriteU16((ushort)t.GroundSpeed)));
+            if (t.Writable) list.Add((0x09, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.WritableOnce) list.Add((0x0A, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.HasLight) list.Add((0x16, () => { w.WriteU16((ushort)t.LightLevel); w.WriteU16((ushort)t.LightColor); }));
+            if (t.HasOffset) list.Add((0x18, () => { w.WriteI16((short)t.OffsetX); w.WriteI16((short)t.OffsetY); }));
+            if (t.HasElevation) list.Add((0x19, () => w.WriteU16((ushort)t.Elevation)));
+            if (t.MiniMap) list.Add((0x1C, () => w.WriteU16((ushort)t.MiniMapColor)));
+            if (t.IsLensHelp) list.Add((0x1D, () => w.WriteU16((ushort)t.LensHelp)));
+            if (t.Cloth) list.Add((0x20, () => w.WriteU16((ushort)t.ClothSlot)));
+            if (t.IsMarketItem) list.Add((0x21, () => {
+                w.WriteU16((ushort)t.MarketCategory);
+                w.WriteU16((ushort)t.MarketTradeAs);
+                w.WriteU16((ushort)t.MarketShowAs);
+                WriteLatin1Name(w, t.MarketName);
+                w.WriteU16((ushort)t.MarketRestrictProfession);
+                w.WriteU16((ushort)t.MarketRestrictLevel);
+            }));
+        }
+        else if (format == DatThingFormat.V6_10_10__10_56)
+        {
+            if (t.IsGround) list.Add((0x00, () => w.WriteU16((ushort)t.GroundSpeed)));
+            if (t.Writable) list.Add((0x08, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.WritableOnce) list.Add((0x09, () => w.WriteU16((ushort)t.MaxTextLength)));
+            if (t.HasLight) list.Add((0x16, () => { w.WriteU16((ushort)t.LightLevel); w.WriteU16((ushort)t.LightColor); }));
+            if (t.HasOffset) list.Add((0x19, () => { w.WriteI16((short)t.OffsetX); w.WriteI16((short)t.OffsetY); }));
+            if (t.HasElevation) list.Add((0x1A, () => w.WriteU16((ushort)t.Elevation)));
+            if (t.MiniMap) list.Add((0x1D, () => w.WriteU16((ushort)t.MiniMapColor)));
+            if (t.IsLensHelp) list.Add((0x1E, () => w.WriteU16((ushort)t.LensHelp)));
+            if (t.Cloth) list.Add((0x21, () => w.WriteU16((ushort)t.ClothSlot)));
+            if (t.IsMarketItem) list.Add((0x22, () => {
+                w.WriteU16((ushort)t.MarketCategory);
+                w.WriteU16((ushort)t.MarketTradeAs);
+                w.WriteU16((ushort)t.MarketShowAs);
+                WriteLatin1Name(w, t.MarketName);
+                w.WriteU16((ushort)t.MarketRestrictProfession);
+                w.WriteU16((ushort)t.MarketRestrictLevel);
+            }));
+            if (t.HasDefaultAction) list.Add((0x23, () => w.WriteU16((ushort)t.DefaultAction)));
+        }
+
+        return list;
+    }
+
+    private static bool IsSimpleBooleanPropertyTrue(ThingType t, string name)
+    {
+        return name switch
+        {
+            "IsGroundBorder" => t.IsGroundBorder,
+            "IsOnBottom" => t.IsOnBottom,
+            "IsOnTop" => t.IsOnTop,
+            "IsContainer" => t.IsContainer,
+            "Stackable" => t.Stackable,
+            "ForceUse" => t.ForceUse,
+            "MultiUse" => t.MultiUse,
+            "IsFluidContainer" => t.IsFluidContainer,
+            "IsFluid" => t.IsFluid,
+            "IsUnpassable" => t.IsUnpassable,
+            "IsUnmoveable" => t.IsUnmoveable,
+            "BlockMissile" => t.BlockMissile,
+            "BlockPathfind" => t.BlockPathfind,
+            "NoMoveAnimation" => t.NoMoveAnimation,
+            "Pickupable" => t.Pickupable,
+            "Hangable" => t.Hangable,
+            "IsHorizontal" => t.IsHorizontal,
+            "IsVertical" => t.IsVertical,
+            "Rotatable" => t.Rotatable,
+            "DontHide" => t.DontHide,
+            "IsTranslucent" => t.IsTranslucent,
+            "IsLyingObject" => t.IsLyingObject,
+            "AnimateAlways" => t.AnimateAlways,
+            "IsFullGround" => t.IsFullGround,
+            "IgnoreLook" => t.IgnoreLook,
+            "Usable" => t.Usable,
+            "Wrappable" => t.Wrappable,
+            "Unwrappable" => t.Unwrappable,
+            "BottomEffect" => t.BottomEffect,
+            "FloorChange" => t.FloorChange,
+            _ => false
+        };
     }
 }

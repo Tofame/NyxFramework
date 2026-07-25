@@ -8,27 +8,27 @@ internal static class ThingPropertyDecoder
 {
     private const byte LastFlag = 0xFF;
 
-    public static void Read(ref LittleEndianSpanReader reader, ThingType thing, DatThingFormat format)
+    public static void Read(ref LittleEndianSpanReader reader, ThingType thing, DatThingFormat format, ClientDataReadOptions? options = null)
     {
         switch (format)
         {
             case DatThingFormat.V1_7_10__7_30:
-                ReadV1(ref reader, thing);
+                ReadV1(ref reader, thing, options);
                 return;
             case DatThingFormat.V2_7_40__7_50:
-                ReadV2(ref reader, thing);
+                ReadV2(ref reader, thing, options);
                 return;
             case DatThingFormat.V3_7_55__7_72:
-                ReadV3(ref reader, thing);
+                ReadV3(ref reader, thing, options);
                 return;
             case DatThingFormat.V4_7_80__8_54:
-                ReadV4(ref reader, thing);
+                ReadV4(ref reader, thing, options);
                 return;
             case DatThingFormat.V5_8_60__9_86:
-                ReadV5(ref reader, thing);
+                ReadV5(ref reader, thing, options);
                 return;
             case DatThingFormat.V6_10_10__10_56:
-                ReadV6(ref reader, thing);
+                ReadV6(ref reader, thing, options);
                 return;
             default:
                 throw new ArgumentOutOfRangeException(nameof(format));
@@ -46,7 +46,7 @@ internal static class ThingPropertyDecoder
         return Encoding.Latin1.GetString(bytes);
     }
 
-    private static void ReadV1(ref LittleEndianSpanReader r, ThingType t)
+    private static void ReadV1(ref LittleEndianSpanReader r, ThingType t, ClientDataReadOptions? options)
     {
         for (var flag = (byte)0; flag < LastFlag;)
         {
@@ -54,6 +54,8 @@ internal static class ThingPropertyDecoder
             flag = r.ReadU8();
             if (flag == LastFlag)
                 return;
+            if (TryReadCustomFlag(flag, t, options))
+                continue;
             switch (flag)
             {
                 case 0x00: t.IsGround = true; t.GroundSpeed = r.ReadU16(); break;
@@ -90,7 +92,7 @@ internal static class ThingPropertyDecoder
         }
     }
 
-    private static void ReadV2(ref LittleEndianSpanReader r, ThingType t)
+    private static void ReadV2(ref LittleEndianSpanReader r, ThingType t, ClientDataReadOptions? options)
     {
         for (var flag = (byte)0; flag < LastFlag;)
         {
@@ -98,6 +100,8 @@ internal static class ThingPropertyDecoder
             flag = r.ReadU8();
             if (flag == LastFlag)
                 return;
+            if (TryReadCustomFlag(flag, t, options))
+                continue;
             switch (flag)
             {
                 case 0x00: t.IsGround = true; t.GroundSpeed = r.ReadU16(); break;
@@ -137,7 +141,7 @@ internal static class ThingPropertyDecoder
         }
     }
 
-    private static void ReadV3(ref LittleEndianSpanReader r, ThingType t)
+    private static void ReadV3(ref LittleEndianSpanReader r, ThingType t, ClientDataReadOptions? options)
     {
         for (var flag = (byte)0; flag < LastFlag;)
         {
@@ -145,6 +149,8 @@ internal static class ThingPropertyDecoder
             flag = r.ReadU8();
             if (flag == LastFlag)
                 return;
+            if (TryReadCustomFlag(flag, t, options))
+                continue;
             switch (flag)
             {
                 case 0x00: t.IsGround = true; t.GroundSpeed = r.ReadU16(); break;
@@ -182,7 +188,7 @@ internal static class ThingPropertyDecoder
         }
     }
 
-    private static void ReadV4(ref LittleEndianSpanReader r, ThingType t)
+    private static void ReadV4(ref LittleEndianSpanReader r, ThingType t, ClientDataReadOptions? options)
     {
         for (var flag = (byte)0; flag < LastFlag;)
         {
@@ -190,6 +196,8 @@ internal static class ThingPropertyDecoder
             flag = r.ReadU8();
             if (flag == LastFlag)
                 return;
+            if (TryReadCustomFlag(flag, t, options))
+                continue;
             switch (flag)
             {
                 case 0x00: t.IsGround = true; t.GroundSpeed = r.ReadU16(); break;
@@ -230,7 +238,7 @@ internal static class ThingPropertyDecoder
         }
     }
 
-    private static void ReadV5(ref LittleEndianSpanReader r, ThingType t)
+    private static void ReadV5(ref LittleEndianSpanReader r, ThingType t, ClientDataReadOptions? options)
     {
         for (var flag = (byte)0; flag < LastFlag;)
         {
@@ -238,6 +246,8 @@ internal static class ThingPropertyDecoder
             flag = r.ReadU8();
             if (flag == LastFlag)
                 return;
+            if (TryReadCustomFlag(flag, t, options))
+                continue;
             switch (flag)
             {
                 case 0x00: t.IsGround = true; t.GroundSpeed = r.ReadU16(); break;
@@ -291,7 +301,7 @@ internal static class ThingPropertyDecoder
         }
     }
 
-    private static void ReadV6(ref LittleEndianSpanReader r, ThingType t)
+    private static void ReadV6(ref LittleEndianSpanReader r, ThingType t, ClientDataReadOptions? options)
     {
         for (var flag = (byte)0; flag < LastFlag;)
         {
@@ -299,6 +309,8 @@ internal static class ThingPropertyDecoder
             flag = r.ReadU8();
             if (flag == LastFlag)
                 return;
+            if (TryReadCustomFlag(flag, t, options))
+                continue;
             switch (flag)
             {
                 case 0x00: t.IsGround = true; t.GroundSpeed = r.ReadU16(); break;
@@ -351,6 +363,55 @@ internal static class ThingPropertyDecoder
                 case 0xFE: t.Usable = true; break;
                 default: ThrowUnknown(flag, previous, t); break;
             }
+        }
+    }
+
+    private static bool TryReadCustomFlag(byte flag, ThingType thing, ClientDataReadOptions? options)
+    {
+        if (options == null) return false;
+        var map = options.ResolveCustomFlagReadMap();
+        if (map != null && map.TryGetValue(flag, out var propertyName))
+        {
+            SetPropertyValue(thing, propertyName, true);
+            return true;
+        }
+        return false;
+    }
+
+    private static void SetPropertyValue(ThingType t, string name, bool value)
+    {
+        switch (name)
+        {
+            case "IsGroundBorder": t.IsGroundBorder = value; break;
+            case "IsOnBottom": t.IsOnBottom = value; break;
+            case "IsOnTop": t.IsOnTop = value; break;
+            case "IsContainer": t.IsContainer = value; break;
+            case "Stackable": t.Stackable = value; break;
+            case "ForceUse": t.ForceUse = value; break;
+            case "MultiUse": t.MultiUse = value; break;
+            case "IsFluidContainer": t.IsFluidContainer = value; break;
+            case "IsFluid": t.IsFluid = value; break;
+            case "IsUnpassable": t.IsUnpassable = value; break;
+            case "IsUnmoveable": t.IsUnmoveable = value; break;
+            case "BlockMissile": t.BlockMissile = value; break;
+            case "BlockPathfind": t.BlockPathfind = value; break;
+            case "NoMoveAnimation": t.NoMoveAnimation = value; break;
+            case "Pickupable": t.Pickupable = value; break;
+            case "Hangable": t.Hangable = value; break;
+            case "IsHorizontal": t.IsHorizontal = value; break;
+            case "IsVertical": t.IsVertical = value; break;
+            case "Rotatable": t.Rotatable = value; break;
+            case "DontHide": t.DontHide = value; break;
+            case "IsTranslucent": t.IsTranslucent = value; break;
+            case "IsLyingObject": t.IsLyingObject = value; break;
+            case "AnimateAlways": t.AnimateAlways = value; break;
+            case "IsFullGround": t.IsFullGround = value; break;
+            case "IgnoreLook": t.IgnoreLook = value; break;
+            case "Usable": t.Usable = value; break;
+            case "Wrappable": t.Wrappable = value; break;
+            case "Unwrappable": t.Unwrappable = value; break;
+            case "BottomEffect": t.BottomEffect = value; break;
+            case "FloorChange": t.FloorChange = value; break;
         }
     }
 }
