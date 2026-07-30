@@ -116,9 +116,89 @@ public static class SpriteImageExporter
 
     public static void SaveBmp(SKBitmap image, Stream destination)
     {
-        using var img = SKImage.FromBitmap(image);
-        using var data = img.Encode(SKEncodedImageFormat.Bmp, 100);
-        data?.SaveTo(destination);
+        int width = image.Width;
+        int height = image.Height;
+        byte[] rgbaPixels = new byte[width * height * 4];
+        
+        for (int y = 0; y < height; y++)
+        {
+            int rowStart = y * width * 4;
+            for (int x = 0; x < width; x++)
+            {
+                var color = image.GetPixel(x, y);
+                int offset = rowStart + x * 4;
+                rgbaPixels[offset] = color.Red;
+                rgbaPixels[offset + 1] = color.Green;
+                rgbaPixels[offset + 2] = color.Blue;
+                rgbaPixels[offset + 3] = color.Alpha;
+            }
+        }
+
+        WriteOpaque24BitBmp(rgbaPixels, width, height, destination);
+    }
+
+    public static void WriteOpaque24BitBmp(byte[] rgbaPixels, int width, int height, Stream destination)
+    {
+        int rowSize = width * 3;
+        int padding = (4 - (rowSize % 4)) % 4;
+        int stride = rowSize + padding;
+        int pixelDataSize = stride * height;
+        int fileSize = 14 + 40 + pixelDataSize;
+
+        using var writer = new BinaryWriter(destination);
+        
+        // BITMAPFILEHEADER
+        writer.Write((ushort)0x4D42); // bfType
+        writer.Write(fileSize);       // bfSize
+        writer.Write((ushort)0);      // bfReserved1
+        writer.Write((ushort)0);      // bfReserved2
+        writer.Write(54);             // bfOffBits
+
+        // BITMAPINFOHEADER
+        writer.Write(40);             // biSize
+        writer.Write(width);          // biWidth
+        writer.Write(-height);        // biHeight (negative for top-down)
+        writer.Write((ushort)1);      // biPlanes
+        writer.Write((ushort)24);     // biBitCount
+        writer.Write(0);              // biCompression
+        writer.Write(pixelDataSize);  // biSizeImage
+        writer.Write(2835);           // biXPelsPerMeter
+        writer.Write(2835);           // biYPelsPerMeter
+        writer.Write(0);              // biClrUsed
+        writer.Write(0);              // biClrImportant
+
+        // Pixel Data
+        byte[] paddingBytes = new byte[padding];
+        for (int y = 0; y < height; y++)
+        {
+            int rowStart = y * width * 4;
+            for (int x = 0; x < width; x++)
+            {
+                int pixelOffset = rowStart + x * 4;
+                byte r = rgbaPixels[pixelOffset];
+                byte g = rgbaPixels[pixelOffset + 1];
+                byte b = rgbaPixels[pixelOffset + 2];
+                byte a = rgbaPixels[pixelOffset + 3];
+
+                if (a < 128)
+                {
+                    // Magenta color key (R=255, G=0, B=255)
+                    writer.Write((byte)255); // B
+                    writer.Write((byte)0);   // G
+                    writer.Write((byte)255); // R
+                }
+                else
+                {
+                    writer.Write(b);
+                    writer.Write(g);
+                    writer.Write(r);
+                }
+            }
+            if (padding > 0)
+            {
+                writer.Write(paddingBytes);
+            }
+        }
     }
 
     public static void WritePng(ReadOnlySpan<byte> nyxAssetsRgba32x32, Stream destination)
