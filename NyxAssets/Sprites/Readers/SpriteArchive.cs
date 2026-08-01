@@ -321,7 +321,7 @@ public sealed class SpriteArchive : ISpriteSource
 
         var existed = _spriteBuffers[spriteId] != null;
         _spriteBuffers[spriteId] = null;
-        if (existed && spriteId == SpriteCount)
+        if (spriteId == SpriteCount)
         {
             while (SpriteCount > 0 && (SpriteCount >= (uint)_spriteBuffers.Length || _spriteBuffers[SpriteCount] == null))
                 SpriteCount--;

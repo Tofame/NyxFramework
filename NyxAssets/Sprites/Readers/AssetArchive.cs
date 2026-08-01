@@ -419,24 +419,21 @@ public sealed class AssetArchive : ISpriteSource
 		if (spriteId == 0 || spriteId > SpriteCount)
 			return false;
 
+		var existed = true;
 		if (_spriteOverrides.TryGetValue(spriteId, out var overrideSprite))
 		{
-			if (overrideSprite == null)
-				return false;
-
-			_spriteOverrides[spriteId] = null;
-			if (spriteId == _spriteCount)
-				RecalculateSpriteCount();
-			return true;
+			existed = overrideSprite != null;
 		}
-
-		if (!HasOriginalSprite(spriteId))
-			return false;
+		else if (!HasOriginalSprite(spriteId))
+		{
+			existed = false;
+		}
 
 		_spriteOverrides[spriteId] = null;
 		if (spriteId == _spriteCount)
 			RecalculateSpriteCount();
-		return true;
+
+		return existed;
 	}
 
 	public void WriteToStream(Stream output)
@@ -500,12 +497,18 @@ public sealed class AssetArchive : ISpriteSource
 			if (_spriteOverrides.TryGetValue(spriteId, out var overrideSprite))
 			{
 				if (overrideSprite != null)
+				{
+					_spriteCount = spriteId;
 					return;
+				}
 				continue;
 			}
 
 			if (HasOriginalSprite(spriteId))
+			{
+				_spriteCount = spriteId;
 				return;
+			}
 		}
 
 		_spriteCount = 0;
